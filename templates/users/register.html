@@ -1,0 +1,89 @@
+{% extends 'layouts/base-fullscreen.html' %}
+{% block title %} Register {% endblock title %}
+{% block stylesheets %}{% endblock stylesheets %}
+{% block content %}
+    <div class="container mt--8 pb-5">
+      <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+          <div class="card bg-secondary shadow border-0">
+            <div class="card-header bg-transparent pb-2">
+              <div class="text-muted text-center mt-2 mb-2">
+                {% if user.is_authenticated %}
+                  Already Logged In
+                {% else %}
+                  Register
+                {% endif %}
+              </div>
+            </div>
+            <div class="card-body px-lg-5 py-lg-5">
+              {% if user.is_authenticated %}
+                <div class="text-center">
+                  <p>You are already logged in. <a href="{% url 'profile' %}" class="btn btn-primary">Go to your profile</a>.</p>
+                </div>
+              {% else %}
+                {% if not success %}
+                  <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                      <div class="input-group input-group-alternative">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text"><i class="ni ni-single-02"></i></span>
+                        </div>
+                        <input type="text" id="first_name" name="first_name" placeholder="Enter First Name" required style="border:none;width:25rem">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="input-group input-group-alternative">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text"><i class="ni ni-single-02"></i></span>
+                        </div>
+                        <input type="text" id="last_name" name="last_name" placeholder="Enter Last Name" required style="border:none;width:25rem">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="input-group input-group-alternative mb-3">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text"><i class="ni ni-email-83"></i></span>
+                        </div>
+                        <input type="email" name="email" placeholder="Enter Email" required style="border:none;width:25rem">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="input-group input-group-alternative mb-3">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text"><i class="ni ni-email-83"></i></span>
+                        </div>
+                        <input type="email" id="confirm_email" name="confirm_email" placeholder="Confirm Email" required style="border:none;width:25rem">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="input-group input-group-alternative mb-3">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text"><i class="ni ni-email-83"></i></span>
+                        </div>
+                        <input type="password" id="password" name="password" placeholder="Enter Password" required style="border:none;width:25rem">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="input-group input-group-alternative mb-3">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text"><i class="ni ni-email-83"></i></span>
+                        </div>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required style="border:none;width:25rem">
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-primary my-4">Create account</button>
+                      <a type="button" class="btn btn-secondary my-4" href="{% url 'login' %}" class="text-light">Login</a>
+                    </div>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+{% block javascripts %}{% endblock javascripts %}

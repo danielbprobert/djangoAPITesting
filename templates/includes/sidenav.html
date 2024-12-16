@@ -1,0 +1,48 @@
+<nav class="sidenav navbar navbar-vertical fixed-left navbar-expand-xs navbar-light bg-white" id="sidenav-main">
+  <div class="scrollbar-inner">
+    <!-- Logo -->
+    <div class="sidenav-header align-items-center">
+      <a class="navbar-brand" href="{% url 'home' %}">
+        <img src="/static/assets/img/brand/blue.png" class="navbar-brand-img" alt="Hyphen8 APIs.">
+      </a>
+    </div>
+    <div class="navbar-inner">
+      <!-- Navigation -->
+      <div class="collapse navbar-collapse" id="sidenav-collapse-main">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link {% if 'dashboard' in segment %} active {% endif %}" href="{% url 'home' %}">
+              <i class="ni ni-sound-wave text-primary"></i>
+              <span class="nav-link-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'connections' in segment %} active {% endif %}" href="{% url 'connections' %}">
+              <i class="ni ni-planet text-primary"></i>
+              <span class="nav-link-text">Connections</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'api-keys' in segment %} active {% endif %}" href="{% url 'apikeys' %}">
+              <i class="ni ni-lock-circle-open text-primary"></i>
+              <span class="nav-link-text">API Key</span>
+            </a>
+          </li>
+          <!-- Subscriptions Link -->
+          <li class="nav-item">
+            <a class="nav-link {% if 'subscriptions' in segment %} active {% endif %}" href="{% url 'subscriptions:subscription_options_list' %}">
+              <i class="ni ni-bag-17 text-primary"></i>
+              <span class="nav-link-text">Subscriptions</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'logout' %}">
+              <i class="ni ni-user-run text-red"></i>
+              <span class="nav-link-text">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>

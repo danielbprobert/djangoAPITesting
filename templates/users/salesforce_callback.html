@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Salesforce Callback</title>
+    <script>
+        window.onload = function () {
+            const hashParams = new URLSearchParams(window.location.hash.slice(1));
+            const accessToken = hashParams.get('access_token');
+            const instanceUrl = hashParams.get('instance_url');
+
+            if (accessToken && instanceUrl) {
+                fetch('/salesforce/save-tokens/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ access_token: accessToken, instance_url: instanceUrl })
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Salesforce connection added successfully!');
+                        window.location = '/dashboard/';
+                    } else {
+                        alert('Failed to add Salesforce connection.');
+                    }
+                });
+            } else {
+                alert('Missing Salesforce tokens.');
+            }
+        };
+    </script>
+</head>
+<body>
+    <p>Connecting to Salesforce...</p>
+</body>
+</html>

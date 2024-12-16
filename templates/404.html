@@ -1,0 +1,23 @@
+{% extends 'layouts/base-fullscreen.html' %}
+{% block title %} Error 404 {% endblock title %}
+{% block stylesheets %}{% endblock stylesheets %}
+{% block content %}
+<div class="container mt--8 pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+      <div class="card bg-secondary shadow border-0">
+        <div class="card-header bg-transparent pb-2">
+          <div class="text-muted text-center mt-2 mb-2">
+            Oppsy! Error 404   
+          </div>
+        </div>
+        <div class="card-body px-lg-5 py-lg-5">
+          Page not found - <a href="{% url 'profile' %}">Profile</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+{% block javascripts %}{% endblock javascripts %}
+

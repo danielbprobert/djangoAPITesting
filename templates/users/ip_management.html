@@ -1,0 +1,113 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Profile {% endblock title %}
+
+{% block content %}
+<div class="header pb-6 d-flex align-items-center" 
+     style="min-height: 250px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
+  <!-- Mask -->
+  <span class="mask bg-gradient-default opacity-8"></span>
+  <!-- Header container -->
+  <div class="container-fluid d-flex align-items-center">
+    <div class="row">
+      <div class="col-lg-12 col-md-12">
+        <h1 class="display-2 text-white"> 
+          Hello {{ request.user.first_name }}
+        </h1>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-12 order-xl-1">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h3 class="mb-0">Your IP Addresses</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+
+          {% if login_ips %}
+            <!-- Untrusted Login IPS -->
+            <div class="mt-4">
+              <h2>New Untrusted Login IP Addresses</h2>
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>IP Address</th>
+                      <th>Dated Added</th>
+                      <th>Trusted</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for ip in login_ips %}
+                    <tr>
+                      <td>{{ ip.ip_address }}</td>
+                      <td>{{ ip.added_at }}</td>
+                      <td>
+                        <form method="post" action="{% url 'mark_trusted' ip.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-success btn-sm">Mark as Trusted</button>
+                        </form>
+                      </td>
+                      <td>
+                        <form method="post" action="{% url 'delete_ip' ip.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Trusted IPs -->
+          <div class="mt-4">
+            <h2>Trusted IP Addresses</h2>
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>IP Address</th>
+                    <th>Date Added</th>
+                    <td>Action</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ip in trusted_ips %}
+                  <tr>
+                    <td>{{ ip.ip_address }}</td>
+                    <td>{{ ip.added_at }}</td>
+                    <td>
+                      <form method="post" action="{% url 'delete_ip' ip.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "includes/footer.html" %}
+
+</div>
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

@@ -1,0 +1,73 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Subscriptions {% endblock title %}
+
+{% block content %}
+
+<div class="header pb-6 d-flex align-items-center" 
+     style="min-height: 250px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
+  <!-- Mask -->
+  <span class="mask bg-gradient-default opacity-8"></span>
+  <!-- Header container -->
+  <div class="container-fluid d-flex align-items-center">
+    <div class="row">
+      <div class="col-lg-12 col-md-12">
+        <h1 class="display-2 text-white"> 
+          Available Products
+        </h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <!-- Card header -->
+        <div class="card-header border-0">
+          <h3 class="mb-0">Subscription Options</h3>
+        </div>
+
+        <div class="row justify-content-center">
+          <div class="col-lg-10">
+            <div class="pricing card-group flex-column flex-md-row mb-3">
+              {% for option in subscription_options %}
+              <div class="card card-pricing border-0 text-center mb-4">
+                <div class="card-header bg-transparent">
+                  <h4 class="text-uppercase ls-1 text-primary py-3 mb-0">{{ option.name }}</h4>
+                </div>
+                <div class="card-body px-lg-7">
+                  <div class="display-2">£{{ option.cost }}</div>
+                  <span class="text-muted">{{ option.api_limit }} API calls</span>
+
+                  <div class="mt-3">
+                    {% if option.is_subscribed %}
+                      {% if option.is_active_subscription %}
+                      <span class="badge badge-success">Active</span>
+                      {% else %}
+                      <span class="badge badge-warning">Inactive</span>
+                      {% endif %}
+                    {% else %}
+                      <a class="btn btn-primary mt-3" href="{% url 'subscriptions:subscribe' option.id %}">Subscribe</a>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "includes/footer.html" %}
+
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}{% endblock javascripts %}

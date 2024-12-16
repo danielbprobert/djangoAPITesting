@@ -1,0 +1,124 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Profile {% endblock title %}
+
+{% block content %}
+<div class="header pb-6 d-flex align-items-center" 
+     style="min-height: 250px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
+  <!-- Mask -->
+  <span class="mask bg-gradient-default opacity-8"></span>
+  <!-- Header container -->
+  <div class="container-fluid d-flex align-items-center">
+    <div class="row">
+      <div class="col-lg-12 col-md-12">
+        <h1 class="display-2 text-white"> 
+          Hello {{ request.user.first_name }}
+        </h1>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-12 order-xl-1">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h3 class="mb-0">Your Profile</h3>
+            </div>
+            <div class="col-4 text-right">
+              <a class="btn btn-sm btn-primary" href="{% url 'password_reset' %}">Forgot Password?</a>
+              <button id="edit-profile-btn" class="btn btn-sm btn-primary" onclick="toggleEdit()">Edit Profile</button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Profile Edit Form -->
+          <form method="post" action="{% url 'update_profile' %}" id="profile-form">
+            {% csrf_token %}
+            <div class="mt-4">
+              <h2>User information</h2>
+              <div class="pl-lg-4">
+                <div class="row">
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                      <label class="form-control-label" for="input-firstname">First Name</label>
+                      <input type="text" id="input-firstname" name="first_name" class="form-control" placeholder="First Name" disabled value="{{ request.user.first_name }}">
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                      <label class="form-control-label" for="input-lastname">Last Name</label>
+                      <input type="text" id="input-lastname" name="last_name" class="form-control" placeholder="Last Name" disabled value="{{ request.user.last_name }}">
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                      <label class="form-control-label" for="input-username">Username</label>
+                      <input type="text" id="input-username" class="form-control" placeholder="Username" disabled value="{{ request.user.username }}">
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="form-group">
+                      <label class="form-control-label" for="input-email">Email address</label>
+                      <input type="email" id="input-email" class="form-control" disabled placeholder="{{ request.user.email }}">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <!-- Two-Factor Authentication Section -->
+          <div class="mt-4">
+            <h2>Two-Factor Authentication</h2>
+            <div class="d-flex justify-content-between align-items-center">
+              {% if user.otp_device %}
+                <p class="mb-0">OTP is enabled for your account.</p>
+                <form method="post" action="{% url 'disable_otp' %}" class="ms-3">
+                  {% csrf_token %}
+                  <button class="btn btn-primary" type="submit">Disable OTP</button>
+                </form>
+              {% else %}
+                <p class="mb-0">OTP is not enabled for your account.</p>
+                <form method="post" action="{% url 'enable_otp' %}" class="ms-3">
+                  {% csrf_token %}
+                  <button class="btn btn-primary" type="submit">Enable OTP</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "includes/footer.html" %}
+
+</div>
+
+<script>
+  function toggleEdit() {
+    const form = document.getElementById('profile-form');
+    const firstNameInput = document.getElementById('input-firstname');
+    const lastNameInput = document.getElementById('input-lastname');
+    const editButton = document.getElementById('edit-profile-btn');
+
+    // Toggle edit mode
+    const isEditing = editButton.innerText === 'Save Profile';
+
+    if (isEditing) {
+      // Submit the form
+      form.submit();
+    } else {
+      // Enable only the first_name and last_name inputs
+      firstNameInput.removeAttribute('disabled');
+      lastNameInput.removeAttribute('disabled');
+      editButton.innerText = 'Save Profile';
+    }
+  }
+</script>
+{% endblock content %}
