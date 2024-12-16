@@ -80,12 +80,12 @@ WSGI_APPLICATION = 'hyphen8apis.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgres_pyscopg2',
-        'NAME': 'apitestdb',
-        'USER': 'apitestadmin',
-        'PASSWORD': 'yw84th0r',
-        'HOST': 'localhost',
-        'PORT': ''
+        'ENGINE': config('DB_ENGINE', default='your-default-secret-key'),
+        'NAME': config('DB_NAME', default='your-default-secret-key'),
+        'USER': config('DB_USER', default='your-default-secret-key'),
+        'PASSWORD': config('DB_PASSWORD', default='your-default-secret-key'),
+        'HOST': config('DB_HOST', default='your-default-secret-key'),
+        'PORT': config('DB_PORT', default='your-default-secret-key')
     }
 }
 
@@ -137,11 +137,11 @@ LOGIN_REDIRECT_URL = '/'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Or your email provider
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your_email@example.com'
-EMAIL_HOST_PASSWORD = 'your_password'
-DEFAULT_FROM_EMAIL = 'webmaster@example.com'  # Sender address for the reset email
+EMAIL_HOST = config('EMAIL_HOST', default='your-default-secret-key')
+EMAIL_PORT = config('EMAIL_PORT', default='your-default-secret-key')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default='your-default-secret-key')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your-default-secret-key')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your-default-secret-key')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your-default-secret-key')
 
 
