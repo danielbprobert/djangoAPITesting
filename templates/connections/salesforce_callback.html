@@ -44,11 +44,9 @@
 <script>
     window.onload = function () {
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
-        console.log('hashParams > ' + JSON.stringify(hashParams));
         const accessToken = hashParams.get('access_token');
-        console.log('accessToken > ' + JSON.stringify(accessToken));
         const instanceUrl = hashParams.get('instance_url');
-        console.log('instanceUrl > ' + JSON.stringify(instanceUrl));
+
         if (accessToken && instanceUrl) {
             fetch('/salesforce/save-tokens/', {
                 method: 'POST',
@@ -69,5 +67,6 @@
         }
     };
 </script>
+
 
 {% endblock content %}
