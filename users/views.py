@@ -376,7 +376,7 @@ def dashboard(request):
             'subscription_limit': user_subscription_limit
         }
 
-    return render(request, 'users/dashboard.html', {
+    return render(request, 'dashboard/dashboard.html', {
         'segment': 'dashboard',
         'has_active_subscription': has_active_subscription,
         'api_usage_stats': api_usage_stats,
