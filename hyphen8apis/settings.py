@@ -80,12 +80,8 @@ WSGI_APPLICATION = 'hyphen8apis.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': config('DB_ENGINE', default='your-default-secret-key'),
-        'NAME': config('DB_NAME', default='your-default-secret-key'),
-        'USER': config('DB_USER', default='your-default-secret-key'),
-        'PASSWORD': config('DB_PASSWORD', default='your-default-secret-key'),
-        'HOST': config('DB_HOST', default='your-default-secret-key'),
-        'PORT': config('DB_PORT', default='your-default-secret-key')
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -121,10 +117,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 # STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
 
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
+
+STATIC_ROOT = '/home/ubuntu/djangoAPITesting/staticfiles'
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
