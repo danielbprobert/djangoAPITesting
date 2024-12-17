@@ -3,6 +3,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.utils.timezone import now
+from datetime import timedelta
+from django.conf import settings
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
@@ -69,7 +71,6 @@ class LoginHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.login_time}"
-    
 
 class APIUsage(models.Model):
     STATUS_CHOICES = [
@@ -84,8 +85,20 @@ class APIUsage(models.Model):
     status = models.CharField(max_length=7, choices=STATUS_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    process_start_time = models.DateTimeField(null=True, blank=True)
+    process_end_time = models.DateTimeField(null=True, blank=True)
+    process_duration = models.FloatField(null=True, blank=True)  # duration in seconds
+    process_status = models.CharField(max_length=10, null=True, blank=True)  # SUCCESS or FAILURE
+
+    def calculate_process_duration(self):
+        if self.process_start_time and self.process_end_time:
+            self.process_duration = (self.process_end_time - self.process_start_time).total_seconds()
+            self.save()
+
     def __str__(self):
         return f"API Usage by {self.user.username} - {self.status} at {self.timestamp}"
+
+    
     
 class TrustedIP(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="trusted_ips")
