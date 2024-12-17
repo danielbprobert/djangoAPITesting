@@ -42,8 +42,8 @@
                     {% for connection in user.salesforce_connections.all %}
                     <tr>
                       <td>{{ connection.connection_name }}</td>
-                      <td>{{ connection.connection_id }}</td>
-                      <td>{{ connection.connection.instance_url }}</td>
+                      <td>{{ connection.id }}</td>
+                      <td>{{ connection.instance_url }}</td>
                       <td>
                         <button class="btn btn-danger" onclick="disconnectConnection('{{ connection.id }}')">Disconnect</button>
                       </td>
