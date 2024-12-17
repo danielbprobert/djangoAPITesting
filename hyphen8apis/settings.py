@@ -3,9 +3,13 @@ from pathlib import Path
 from decouple import config
 
 import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 sentry_sdk.init(
     dsn=config('SENTRY_SDK_KEY', default='your-default-secret-key'),
+    integrations=[DjangoIntegration()],
+    traces_sample_rate=1.0,
+    send_default_pii=False,
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
