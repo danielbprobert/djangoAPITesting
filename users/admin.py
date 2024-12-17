@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, APIKey, APIUsage, TrustedIP, UserChangeAudit
+from .models import CustomUser, APIKey, APIUsage, TrustedIP, UserChangeAudit, SalesforceConnection
 
 class APIKeyInline(admin.TabularInline):
     model = APIKey
@@ -57,5 +57,20 @@ class CustomUserAdmin(UserAdmin):
 
     inlines = [APIKeyInline, APIUsageInline, TrustedIPInline, UserChangeAuditInline]
 
+@admin.register(SalesforceConnection)
+class SalesforceConnectionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'connection_name', 'authenticated', 'instance_url', 'created_at', 'updated_at')
+    search_fields = ('user__username', 'connection_name', 'instance_url')
+    list_filter = ('authenticated', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
 
+    fieldsets = (
+        (None, {
+            'fields': ('user', 'connection_name', 'access_token', 'refresh_token', 'instance_url', 'authenticated')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+        }),
+    )
 
