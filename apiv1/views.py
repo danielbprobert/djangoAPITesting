@@ -63,6 +63,7 @@ class DocumentProcessingView(APIView):
             if file_extension == ".pdf":
                 parsed_text, num_pages, num_characters = self.extract_text_with_ocr(file_path)
 
+            
             # Stream the file back to the client if needed
             response_data = {
                 "fileName": os.path.basename(file_path),
@@ -70,7 +71,9 @@ class DocumentProcessingView(APIView):
                 "numCharacters": num_characters,
                 "parsedText": parsed_text,
             }
-
+            
+            capture_message(f"Response Date: {response_data}", level="info")
+            
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
