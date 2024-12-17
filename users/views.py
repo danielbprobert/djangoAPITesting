@@ -326,9 +326,10 @@ def dashboard(request):
     user_subscription_limit = 0
 
     if has_active_subscription:
-        # Get the user's active subscription
+        # Get the user's active subscription and the related SubscriptionOption
         user_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).first()
-        user_subscription_limit = user_subscription.api_limit if user_subscription else 0  # Assuming 'api_limit' stores the user's limit
+        if user_subscription and user_subscription.subscription_option:
+            user_subscription_limit = user_subscription.subscription_option.api_limit  # Fetch the api_limit from SubscriptionOption
 
         # Get current date and time
         now = datetime.now()
