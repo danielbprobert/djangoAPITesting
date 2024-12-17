@@ -31,7 +31,6 @@ class DocumentProcessingView(APIView):
         capture_message(f"Processing documentId: {document_id}, organisationId: {organisation_id}", level="info")
 
         if not document_id or not organisation_id:
-            capture_message("Missing required parameters in request", level="warning")
             return Response(
                 {"error": "Missing documentId or organisationId"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -50,10 +49,30 @@ class DocumentProcessingView(APIView):
             )
 
         try:
-            # Stream the file content directly
-            return self.stream_file_from_salesforce(
+            # Fetch the file
+            file_path = self.fetch_file_from_salesforce(
                 connection.access_token, document_id, connection.instance_url
             )
+
+            # Process file to extract text (if it's a PDF)
+            file_extension = os.path.splitext(file_path)[1].lower()
+            parsed_text = None
+            num_pages = 0
+            num_characters = 0
+
+            if file_extension == ".pdf":
+                parsed_text, num_pages, num_characters = self.extract_text_with_ocr(file_path)
+
+            # Stream the file back to the client if needed
+            response_data = {
+                "fileName": os.path.basename(file_path),
+                "numPages": num_pages,
+                "numCharacters": num_characters,
+                "parsedText": parsed_text,
+            }
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
         except Exception as e:
             capture_exception(e)
             return Response(
@@ -61,9 +80,9 @@ class DocumentProcessingView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def stream_file_from_salesforce(self, access_token, document_id, instance_url):
+    def fetch_file_from_salesforce(self, access_token, document_id, instance_url):
         """
-        Stream the file content directly from Salesforce using access_token and documentId.
+        Fetch the file's content from Salesforce using access_token and documentId.
         """
         sf = Salesforce(instance_url=instance_url, session_id=access_token)
 
@@ -91,38 +110,17 @@ class DocumentProcessingView(APIView):
         if response.status_code != 200:
             raise ValueError(f"Failed to fetch file content. HTTP Status {response.status_code}")
 
-        # Stream the file content back to the client
-        content_type = self.get_content_type(file_extension)
-        response_headers = {
-            'Content-Disposition': f'attachment; filename="{file_name}.{file_extension}"',
-            'Content-Type': content_type,
-        }
+        # Save the file temporarily
+        file_path = os.path.join(settings.MEDIA_ROOT, f"{file_name}.{file_extension}")
+        with open(file_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                f.write(chunk)
 
-        return StreamingHttpResponse(
-            streaming_content=response.iter_content(chunk_size=1024),
-            headers=response_headers,
-            status=200
-        )
-
-    def get_content_type(self, file_extension):
-        """
-        Return the appropriate content type based on file extension.
-        """
-        content_types = {
-            "pdf": "application/pdf",
-            "jpg": "image/jpeg",
-            "jpeg": "image/jpeg",
-            "png": "image/png",
-            "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            "txt": "text/plain",
-        }
-        return content_types.get(file_extension.lower(), "application/octet-stream")
+        return file_path
 
     def extract_text_with_ocr(self, pdf_path):
         """
-        Extract text from PDF using OCR.
+        Extract text from PDF.
         """
         reader = PdfReader(pdf_path)
         text = ""
@@ -134,59 +132,3 @@ class DocumentProcessingView(APIView):
 
         num_characters = len(text)
         return text, num_pages, num_characters
-
-    def convert_image_to_pdf(self, image_path):
-        pdf_path = f"{os.path.splitext(image_path)[0]}.pdf"
-        images = convert_from_path(image_path)
-        images[0].save(pdf_path, "PDF")
-        return pdf_path
-
-    def convert_docx_to_pdf(self, docx_path):
-        pdf_path = f"{os.path.splitext(docx_path)[0]}.pdf"
-        pdf = canvas.Canvas(pdf_path)
-        document = Document(docx_path)
-        text = "\n".join([p.text for p in document.paragraphs])
-        pdf.drawString(100, 750, text)
-        pdf.save()
-        return pdf_path
-
-    def convert_excel_to_pdf(self, excel_path):
-        pdf_path = f"{os.path.splitext(excel_path)[0]}.pdf"
-        workbook = load_workbook(excel_path)
-        pdf = canvas.Canvas(pdf_path)
-
-        y = 750
-        margin = 50
-        page_width = 595.27
-        page_height = 841.89
-
-        for sheet in workbook.sheetnames:
-            worksheet = workbook[sheet]
-            pdf.drawString(margin, y, f"Worksheet: {sheet}")
-            y -= 20
-
-            for row in worksheet.iter_rows(values_only=True):
-                text = " | ".join([str(cell) if cell is not None else "" for cell in row])
-                pdf.drawString(margin, y, text)
-                y -= 20
-
-                if y <= margin:
-                    pdf.showPage()
-                    y = page_height - margin
-
-        pdf.save()
-        return pdf_path
-
-    def convert_ppt_to_pdf(self, ppt_path):
-        pdf_path = f"{os.path.splitext(ppt_path)[0]}.pdf"
-        presentation = Presentation(ppt_path)
-        pdf = canvas.Canvas(pdf_path)
-        y = 750
-        for slide in presentation.slides:
-            for shape in slide.shapes:
-                if shape.has_text_frame:
-                    text = shape.text
-                    pdf.drawString(100, y, text)
-                    y -= 20
-        pdf.save()
-        return pdf_path
