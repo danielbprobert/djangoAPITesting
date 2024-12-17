@@ -9,7 +9,8 @@ import requests
 from rest_framework.permissions import IsAuthenticated
 from sentry_sdk import capture_exception, capture_message
 from .authentication import CustomTokenAuthentication
-from users.models import SalesforceConnection, APIUsage
+from users.models import SalesforceConnection, APIUsage, APIKey
+
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
@@ -24,7 +25,7 @@ class DocumentProcessingView(APIView):
         capture_message(f"Processing documentId: {document_id}, organisationId: {organisation_id}", level="info")
 
         if not document_id or not organisation_id:
-            self.log_api_usage(request.user, None, document_id, "FAILURE")
+            self.log_api_usage(request.user, None, document_id, "FAILURE", request)
             return Response(
                 {"error": "Missing documentId or organisationId"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -37,7 +38,7 @@ class DocumentProcessingView(APIView):
                 organization_id=organisation_id
             )
         except SalesforceConnection.DoesNotExist:
-            self.log_api_usage(request.user, None, document_id, "FAILURE")
+            self.log_api_usage(request.user, None, document_id, "FAILURE", request)
             return Response(
                 {"error": "No Salesforce connection found for this organisation"},
                 status=status.HTTP_404_NOT_FOUND,
@@ -66,12 +67,12 @@ class DocumentProcessingView(APIView):
                 "parsedText": parsed_text,
             }
 
-            self.log_api_usage(request.user, connection, document_id, "SUCCESS")
+            self.log_api_usage(request.user, connection, document_id, "SUCCESS", request)
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             capture_exception(e)
-            self.log_api_usage(request.user, connection, document_id, "FAILURE")
+            self.log_api_usage(request.user, connection, document_id, "FAILURE", request)
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -130,14 +131,18 @@ class DocumentProcessingView(APIView):
         num_characters = len(text)
         return text, num_pages, num_characters
 
-    def log_api_usage(self, user, connection, document_id, status):
+    def log_api_usage(self, user, connection, document_id, status, request):
         """
-        Logs API usage details to the APIUsage model.
+        Logs API usage details to the APIUsage model, including the API key.
         """
         try:
+            # Get the token from the request and fetch the APIKey object
+            token = self.get_token_from_request(request)
+            api_key = APIKey.objects.filter(key=token).first()
+
             APIUsage.objects.create(
                 user=user,
-                api_key=None,  # Placeholder, adjust if API key is relevant
+                api_key=api_key,
                 salesforce_connection=connection,
                 sf_document_id=document_id,
                 status=status,
@@ -146,3 +151,12 @@ class DocumentProcessingView(APIView):
         except Exception as e:
             capture_exception(e)
             capture_message("Failed to log API usage", level="error")
+
+    def get_token_from_request(self, request):
+        """
+        Extracts the token from the Authorization header.
+        """
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Token "):
+            return auth_header.split()[1]
+        return None
