@@ -63,8 +63,12 @@ class DocumentProcessingView(APIView):
             if file_extension == ".pdf":
                 parsed_text, num_pages, num_characters = self.extract_text_with_ocr(file_path)
 
-            
-            # Stream the file back to the client if needed
+            safe_headers = {
+                "Content-Disposition": f"inline; filename=\"{os.path.basename(file_path)}\"",
+                "Content-Type": "application/json"
+            }
+
+            # Response Data
             response_data = {
                 "fileName": os.path.basename(file_path),
                 "numPages": num_pages,
@@ -73,8 +77,8 @@ class DocumentProcessingView(APIView):
             }
             
             capture_message(f"Response Date: {response_data}", level="info")
-            
-            return Response(response_data, status=status.HTTP_200_OK)
+
+            return Response(response_data, headers=safe_headers, status=status.HTTP_200_OK)
 
         except Exception as e:
             capture_exception(e)
