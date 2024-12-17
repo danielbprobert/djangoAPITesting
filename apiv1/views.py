@@ -117,7 +117,7 @@ class DocumentProcessingView(APIView):
         # Perform the request with Bearer token
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(version_data_url, headers=headers, stream=True)
-
+        capture_message(f"Fetching VersionData from URL: {response}", level="info")
         if response.status_code != 200:
             raise ValueError(f"Failed to fetch file content. HTTP Status {response.status_code}")
 
