@@ -26,6 +26,8 @@ class DocumentProcessingView(APIView):
         document_id = request.data.get("documentId")
         organisation_id = request.data.get("organisationId")
 
+        capture_message(f"Processing documentId: {document_id}, organisationId: {organisation_id}", level="info")
+
         if not document_id or not organisation_id:
             capture_message("Missing required parameters in request", level="warning")
             return Response(
@@ -97,9 +99,9 @@ class DocumentProcessingView(APIView):
         sf = Salesforce(instance_url=instance_url, session_id=access_token)
 
         # Query the ContentVersion for the specified document
-        content_version = sf.query(
-            f"SELECT VersionData, Title, FileExtension FROM ContentVersion WHERE Id = '{document_id}'"
-        )
+        query = f"SELECT VersionData, Title, FileExtension FROM ContentVersion WHERE Id = '{document_id}'"
+        capture_message(f"Executing Salesforce Query: {query}", level="info")
+        content_version = sf.query(query)
 
         if not content_version["records"]:
             raise ValueError(f"No file found for DocumentId {document_id}")
