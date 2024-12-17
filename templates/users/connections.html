@@ -60,15 +60,6 @@
                   {% endfor %}
                 </tbody>
               </table>
-              <hr>
-              <form id="add-connection-form" method="POST" action="{% url 'salesforce_login' %}">
-                  {% csrf_token %}
-                  <div class="form-group">
-                      <label for="connection-name">Connection Name</label>
-                      <input type="text" id="connection-name" name="connection_name" class="form-control" required>
-                  </div>
-                  <button type="submit" class="btn btn-primary">Add New Salesforce Connection</button>
-              </form>
             </div>
           </div>
         </div>
