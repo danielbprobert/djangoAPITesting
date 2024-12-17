@@ -21,6 +21,7 @@ from decouple import config
 
 
 SALESFORCE_CLIENT_ID = config('SALESFORCE_CLIENT_ID', default='your-default-secret-key')
+SALESFORCE_CLIENT_SECRET = config('SALESFORCE_SECRET', default='your-default-secret-key')
 SALESFORCE_CALLBACK_URL = config('SALESFORCE_CALLBACK_URL', default='https://127.0.0.1:8000/users/salesforce/callback/')
 
 @login_required
@@ -59,7 +60,7 @@ def salesforce_login(request):
     request.session['connection_name'] = connection_name
     salesforce_auth_url = (
         f"https://login.salesforce.com/services/oauth2/authorize?"
-        f"response_type=token&client_id={SALESFORCE_CLIENT_ID}&redirect_uri={SALESFORCE_CALLBACK_URL}"
+        f"response_type=token&client_id={SALESFORCE_CLIENT_ID}&client_secret={SALESFORCE_CLIENT_SECRET}&redirect_uri={SALESFORCE_CALLBACK_URL}"
     )
     return redirect(salesforce_auth_url)
 
