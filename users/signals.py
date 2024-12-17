@@ -14,6 +14,9 @@ def track_user_changes(sender, instance, **kwargs):
         
         if field_name == 'password':
             continue
+
+        if field_name == 'last_login':
+            continue
         
         old_value = getattr(previous_user, field_name)
         new_value = getattr(instance, field_name)
