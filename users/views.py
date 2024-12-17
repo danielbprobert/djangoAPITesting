@@ -125,7 +125,9 @@ def apikeys(request):
 
 @login_required
 def add_connection(request):
-    return render(request, 'add_connection.html')
+    return render(request, 'users/add_connection.html', {
+        'segment': 'connections',
+    })
 
 
 @login_required
