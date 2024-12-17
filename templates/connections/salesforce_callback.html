@@ -40,7 +40,8 @@
 {% include "includes/footer.html" %}
 
 </div>
-
+{% endblock content %}
+{% block javascripts %}
 <script>
     window.onload = function () {
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
@@ -67,6 +68,4 @@
         }
     };
 </script>
-
-
-{% endblock content %}
+{% endblock javascripts %}
