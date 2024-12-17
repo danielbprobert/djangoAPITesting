@@ -14,31 +14,44 @@ import requests
 from rest_framework.permissions import IsAuthenticated
 from .authentication import CustomTokenAuthentication
 from sentry_sdk import capture_exception, capture_message
-
+from .models import SalesforceConnection
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
         capture_message("DocumentProcessingView: API POST request received", level="info")
-        session_id = request.data.get("sessionId")
+        
         document_id = request.data.get("documentId")
-        instance_url = request.data.get("instanceURL")
+        organisation_id = request.data.get("organisationId")
 
-        if not session_id or not document_id or not instance_url:
+        if not document_id or not organisation_id:
             capture_message("Missing required parameters in request", level="warning")
             return Response(
-                {"error": "Missing sessionId, documentId, or instanceURL"},
+                {"error": "Missing documentId or organisationId"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        
+        # Fetch SalesforceConnection for the user using organisation_id
         try:
-            file_path = self.fetch_file_from_salesforce(
-                session_id, document_id, instance_url
+            connection = SalesforceConnection.objects.get(
+                user=request.user, 
+                organization_id=organisation_id
             )
-            
+        except SalesforceConnection.DoesNotExist:
+            return Response(
+                {"error": "No Salesforce connection found for this organisation"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
+        try:
+            # Fetch file using Salesforce details
+            file_path = self.fetch_file_from_salesforce(
+                connection.access_token, document_id, connection.instance_url
+            )
+
+            # Process the file
             file_extension = os.path.splitext(file_path)[1].lower()
             pdf_path = None
 
@@ -58,6 +71,7 @@ class DocumentProcessingView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            # Extract text and return response
             parsed_text, num_pages, num_characters = self.extract_text_with_ocr(pdf_path)
 
             return Response(
@@ -76,31 +90,13 @@ class DocumentProcessingView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def extract_text_with_ocr(self, pdf_path):
+    def fetch_file_from_salesforce(self, access_token, document_id, instance_url):
         """
-        Extract text using OCR for non-searchable PDFs.
+        Fetch the file's content from Salesforce using access_token and documentId.
         """
-        reader = PdfReader(pdf_path)
-        text = ""
-        num_pages = len(reader.pages)
+        sf = Salesforce(instance_url=instance_url, session_id=access_token)
 
-        for page in reader.pages:
-            text += page.extract_text()
-
-        # If text is empty, perform OCR
-        #if not text.strip():
-            # Specify Poppler path for Windows
-            # poppler_path = r"C:\poppler\Library\bin"  # Update this path if necessary
-            # images = convert_from_path(pdf_path, dpi=300, poppler_path=poppler_path)
-            # ocr_text = [image_to_string(image, lang="eng") for image in images]
-            # text = " ".join(ocr_text)
-
-        # num_characters = len(text)
-        return text, num_pages, 0
-
-    def fetch_file_from_salesforce(self, session_id, document_id, instance_url):
-        sf = Salesforce(instance_url=instance_url, session_id=session_id)
-
+        # Query the ContentVersion for the specified document
         content_version = sf.query(
             f"SELECT VersionData, Title, FileExtension FROM ContentVersion WHERE Id = '{document_id}'"
         )
@@ -108,24 +104,43 @@ class DocumentProcessingView(APIView):
         if not content_version["records"]:
             raise ValueError(f"No file found for DocumentId {document_id}")
 
+        # Fetch file metadata
         version_data_relative_url = content_version["records"][0]["VersionData"]
         file_name = content_version["records"][0]["Title"]
         file_extension = content_version["records"][0]["FileExtension"]
 
+        # Construct full URL to fetch the file
         version_data_url = f"{instance_url}{version_data_relative_url}"
 
-        headers = {"Authorization": f"Bearer {session_id}"}
+        # Perform the request with Bearer token
+        headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(version_data_url, headers=headers, stream=True)
 
         if response.status_code != 200:
             raise ValueError(f"Failed to fetch file content. HTTP Status {response.status_code}")
 
+        # Save the file to a temporary location
         file_path = os.path.join(settings.MEDIA_ROOT, f"{file_name}.{file_extension}")
         with open(file_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=1024):
                 f.write(chunk)
 
         return file_path
+
+    def extract_text_with_ocr(self, pdf_path):
+        """
+        Extract text from PDF using OCR.
+        """
+        reader = PdfReader(pdf_path)
+        text = ""
+        num_pages = len(reader.pages)
+
+        for page in reader.pages:
+            extracted_text = page.extract_text()
+            text += extracted_text if extracted_text else ""
+
+        num_characters = len(text)
+        return text, num_pages, num_characters
 
     def convert_image_to_pdf(self, image_path):
         pdf_path = f"{os.path.splitext(image_path)[0]}.pdf"
