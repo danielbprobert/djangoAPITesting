@@ -95,7 +95,7 @@ def salesforce_login(request):
 
 @login_required
 def salesforce_callback(request):
-    return render(request, 'users/salesforce_callback.html')
+    return render(request, 'connections/salesforce_callback.html')
 
 @login_required
 def apikeys(request):
@@ -125,7 +125,7 @@ def apikeys(request):
 
 @login_required
 def add_connection(request):
-    return render(request, 'users/add_connection.html', {
+    return render(request, 'connections/add_connection.html', {
         'segment': 'connections',
     })
 
@@ -274,7 +274,7 @@ def connections(request):
     if not has_active_subscription:
         messages.error(request, "You need an active subscription to manage API keys.")
         return redirect(f"{reverse('profile')}?segment=connections")
-    return render(request, 'users/connections.html', {
+    return render(request, 'connections/connections.html', {
         'segment': 'connections'
     })
 
