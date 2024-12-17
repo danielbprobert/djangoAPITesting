@@ -64,7 +64,6 @@ class DocumentProcessingView(APIView):
                 parsed_text, num_pages, num_characters = self.extract_text_with_ocr(file_path)
 
             safe_headers = {
-                "Content-Disposition": f"inline; filename=\"{os.path.basename(file_path)}\"",
                 "Content-Type": "application/json"
             }
 
