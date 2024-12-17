@@ -4,19 +4,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from PyPDF2 import PdfReader
-from pdf2image import convert_from_path
-from docx import Document
-from openpyxl import load_workbook
-from pptx import Presentation
-from reportlab.pdfgen import canvas
 from simple_salesforce import Salesforce
 import requests
 from rest_framework.permissions import IsAuthenticated
-from django.http import StreamingHttpResponse
 from sentry_sdk import capture_exception, capture_message
 from .authentication import CustomTokenAuthentication
-from users.models import SalesforceConnection
-
+from users.models import SalesforceConnection, APIUsage
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
@@ -31,6 +24,7 @@ class DocumentProcessingView(APIView):
         capture_message(f"Processing documentId: {document_id}, organisationId: {organisation_id}", level="info")
 
         if not document_id or not organisation_id:
+            self.log_api_usage(request.user, None, document_id, "FAILURE")
             return Response(
                 {"error": "Missing documentId or organisationId"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -43,6 +37,7 @@ class DocumentProcessingView(APIView):
                 organization_id=organisation_id
             )
         except SalesforceConnection.DoesNotExist:
+            self.log_api_usage(request.user, None, document_id, "FAILURE")
             return Response(
                 {"error": "No Salesforce connection found for this organisation"},
                 status=status.HTTP_404_NOT_FOUND,
@@ -63,10 +58,6 @@ class DocumentProcessingView(APIView):
             if file_extension == ".pdf":
                 parsed_text, num_pages, num_characters = self.extract_text_with_ocr(file_path)
 
-            safe_headers = {
-                "Content-Type": "application/json"
-            }
-
             # Response Data
             response_data = {
                 "fileName": os.path.basename(file_path),
@@ -74,13 +65,13 @@ class DocumentProcessingView(APIView):
                 "numCharacters": num_characters,
                 "parsedText": parsed_text,
             }
-            
-            capture_message(f"Response Date: {response_data}", level="info")
 
-            return Response(response_data, headers=safe_headers, status=status.HTTP_200_OK)
+            self.log_api_usage(request.user, connection, document_id, "SUCCESS")
+            return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             capture_exception(e)
+            self.log_api_usage(request.user, connection, document_id, "FAILURE")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -138,3 +129,20 @@ class DocumentProcessingView(APIView):
 
         num_characters = len(text)
         return text, num_pages, num_characters
+
+    def log_api_usage(self, user, connection, document_id, status):
+        """
+        Logs API usage details to the APIUsage model.
+        """
+        try:
+            APIUsage.objects.create(
+                user=user,
+                api_key=None,  # Placeholder, adjust if API key is relevant
+                salesforce_connection=connection,
+                sf_document_id=document_id,
+                status=status,
+            )
+            capture_message(f"API Usage logged: user={user}, status={status}, documentId={document_id}", level="info")
+        except Exception as e:
+            capture_exception(e)
+            capture_message("Failed to log API usage", level="error")
