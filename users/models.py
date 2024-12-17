@@ -98,6 +98,25 @@ class APIUsage(models.Model):
     def __str__(self):
         return f"API Usage by {self.user.username} - {self.status} at {self.timestamp}"
 
+class ProcessLog(models.Model):
+    api_usage = models.ForeignKey('APIUsage', on_delete=models.CASCADE, related_name="process_logs")
+    step_name = models.CharField(max_length=255)  # Name of the step
+    start_time = models.DateTimeField(auto_now_add=True)  # Start time of the step
+    end_time = models.DateTimeField(null=True, blank=True)  # End time of the step
+    duration_seconds = models.FloatField(null=True, blank=True)  # Duration in seconds
+    status = models.CharField(max_length=10)  # SUCCESS or FAILURE
+    error_message = models.TextField(null=True, blank=True)  # Error message if the step fails
+
+    def calculate_duration(self):
+        """
+        Calculates the duration of the step in seconds
+        """
+        if self.start_time and self.end_time:
+            self.duration_seconds = (self.end_time - self.start_time).total_seconds()
+            self.save()
+
+    def __str__(self):
+        return f"Step: {self.step_name} for API Usage: {self.api_usage.id}"
     
     
 class TrustedIP(models.Model):
