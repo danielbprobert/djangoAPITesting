@@ -34,6 +34,7 @@
                     <tr>
                       <th>Name</th>
                       <th>Organisation Id</th>
+                      <th>Org Type</th>
                       <th>Instance URL</th>
                       <th>Action</th>
                     </tr>
@@ -43,6 +44,7 @@
                     <tr>
                       <td>{{ connection.connection_name }}</td>
                       <td>{{ connection.organization_id }}</td>
+                      <td>{{ connection.org_type }}</td>
                       <td>{{ connection.instance_url }}</td>
                       <td>
                         <button class="btn btn-danger" onclick="disconnectConnection('{{ connection.id }}')">Disconnect</button>

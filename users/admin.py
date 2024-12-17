@@ -66,15 +66,15 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(SalesforceConnection)
 class SalesforceConnectionAdmin(admin.ModelAdmin):
-    list_display = ('user', 'connection_name', 'authenticated', 'instance_url', 'created_at', 'updated_at')
+    list_display = ('user', 'connection_name', 'authenticated', 'instance_url', 'org_type', 'created_at', 'updated_at')
     search_fields = ('user__username', 'connection_name', 'instance_url')
-    list_filter = ('authenticated', 'created_at', 'updated_at')
+    list_filter = ('authenticated', 'org_type', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ('-created_at',)
 
     fieldsets = (
         (None, {
-            'fields': ('user', 'connection_name', 'access_token', 'refresh_token', 'instance_url', 'authenticated')
+            'fields': ('user', 'connection_name', 'access_token', 'refresh_token', 'instance_url', 'org_type', 'authenticated')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),

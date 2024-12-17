@@ -52,15 +52,26 @@ class APIKey(models.Model):
         super().save(*args, **kwargs)
 
 class SalesforceConnection(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="salesforce_connections")
+    ORG_TYPE_CHOICES = [
+        ('Production', 'Production'),
+        ('Sandbox', 'Sandbox'),
+        ('Developer', 'Developer'),
+        ('ScratchOrg', 'ScratchOrg'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="salesforce_connections")
     connection_name = models.CharField(max_length=255)  
     access_token = models.CharField(max_length=255)
     refresh_token = models.CharField(max_length=255, blank=True, null=True)
     instance_url = models.URLField()
     authenticated = models.BooleanField(default=False)
     organization_id = models.CharField(max_length=255, blank=True, null=True)
+    org_type = models.CharField(max_length=10, choices=ORG_TYPE_CHOICES, default='Production')  # New field for organization type
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Salesforce Connection for {self.user.username} - {self.connection_name} ({self.get_org_type_display()})"
 
 
 class LoginHistory(models.Model):
