@@ -84,18 +84,85 @@ def save_salesforce_tokens(request):
 @login_required
 def salesforce_login(request):
     connection_name = request.POST.get('connection_name')
+    org_type = request.POST.get('org_type')
+    instance_url = request.POST.get('instance_url')
+
     if not connection_name:
         return JsonResponse({'error': 'Connection name is required'}, status=400)
-    request.session['connection_name'] = connection_name
+
+    # Store the connection details in the SalesforceConnection model
+    salesforce_connection = SalesforceConnection.objects.create(
+        user=request.user,
+        connection_name=connection_name,
+        org_type=org_type,
+        instance_url=instance_url,
+        authenticated=False  # We will update this later when we get the access token
+    )
+
+    # Store the connection ID in the session to associate it with the current user session
+    request.session['salesforce_connection_id'] = salesforce_connection.id
+
     salesforce_auth_url = (
         f"https://login.salesforce.com/services/oauth2/authorize?"
-        f"response_type=token&client_id={SALESFORCE_CLIENT_ID}&redirect_uri={SALESFORCE_CALLBACK_URL}"    
+        f"response_type=token&client_id={SALESFORCE_CLIENT_ID}&redirect_uri={SALESFORCE_CALLBACK_URL}"
     )
+
     return redirect(salesforce_auth_url)
 
 @login_required
 def salesforce_callback(request):
-    return render(request, 'connections/salesforce_callback.html')
+    access_token = request.GET.get('access_token')
+    instance_url = request.GET.get('instance_url')
+
+    # Get the connection ID from the session (set earlier in the salesforce_login view)
+    connection_id = request.session.get('salesforce_connection_id')
+
+    if not access_token or not instance_url:
+        return JsonResponse({'error': 'Missing Salesforce tokens'}, status=400)
+
+    # Get the SalesforceConnection object
+    try:
+        salesforce_connection = SalesforceConnection.objects.get(id=connection_id, user=request.user)
+    except SalesforceConnection.DoesNotExist:
+        return JsonResponse({'error': 'Salesforce connection not found'}, status=404)
+
+    # Update the connection with the access token and instance URL
+    salesforce_connection.access_token = access_token
+    salesforce_connection.instance_url = instance_url
+    salesforce_connection.authenticated = True  # Mark the connection as authenticated
+    salesforce_connection.save()
+
+    return render(request, 'connections/salesforce_callback.html', {'salesforce_connection': salesforce_connection})
+
+@csrf_exempt
+@login_required
+def salesforce_save_tokens(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        access_token = data.get('access_token')
+        instance_url = data.get('instance_url')
+
+        # Get the connection ID from the session (set earlier in the salesforce_login view)
+        connection_id = request.session.get('salesforce_connection_id')
+
+        if not access_token or not instance_url:
+            return JsonResponse({'error': 'Missing Salesforce tokens'}, status=400)
+
+        # Get the SalesforceConnection object
+        try:
+            salesforce_connection = SalesforceConnection.objects.get(id=connection_id, user=request.user)
+        except SalesforceConnection.DoesNotExist:
+            return JsonResponse({'error': 'Salesforce connection not found'}, status=404)
+
+        # Update the connection with the access token and instance URL
+        salesforce_connection.access_token = access_token
+        salesforce_connection.instance_url = instance_url
+        salesforce_connection.authenticated = True  # Mark the connection as authenticated
+        salesforce_connection.save()
+
+        return JsonResponse({'success': 'Salesforce connection updated successfully'})
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 @login_required
 def apikeys(request):
