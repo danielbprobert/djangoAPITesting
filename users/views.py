@@ -268,32 +268,6 @@ def disable_otp(request):
     return redirect('profile')
 
 @login_required
-def profile(request):
-    has_active_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).exists()
-    api_usage_stats = None
-    percentage_change = None
-    if has_active_subscription:
-        total_calls = APIUsage.objects.filter(user=request.user).count()
-        now = datetime.now()
-        last_month = now - timedelta(days=30)
-        last_month_calls = APIUsage.objects.filter(user=request.user, timestamp__gte=last_month).count()
-        previous_month_start = last_month - timedelta(days=30)
-        previous_month_calls = APIUsage.objects.filter(user=request.user, timestamp__gte=previous_month_start, timestamp__lt=last_month).count()
-        if previous_month_calls > 0:
-            percentage_change = ((last_month_calls - previous_month_calls) / previous_month_calls) * 100
-        api_usage_stats = {
-            'total_calls': total_calls,
-            'last_month_calls': last_month_calls,
-            'percentage_change': percentage_change,
-        }
-    return render(request, 'users/profile.html', {
-        'segment': 'profile',
-        'has_active_subscription': has_active_subscription,
-        'api_usage_stats': api_usage_stats,
-    })
-
-
-@login_required
 def connections(request):
     user = request.user
     has_active_subscription = UserSubscription.objects.filter(user=user).exists()
@@ -341,30 +315,76 @@ def ip_management(request):
         'trusted_ips': trusted_ips,
     })
 
+from datetime import datetime, timedelta
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import UserSubscription, APIUsage
+
 @login_required
-def dashbaord(request):
+def dashboard(request):
     has_active_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).exists()
     api_usage_stats = None
-    percentage_change = None
+    percentage_change = 0
+    api_calls_success_change = 0
+    api_calls_error_change = 0
+    user_subscription_limit = 0
+
     if has_active_subscription:
-        total_calls = APIUsage.objects.filter(user=request.user).count()
+        # Get the user's active subscription
+        user_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).first()
+        user_subscription_limit = user_subscription.api_limit if user_subscription else 0  # Assuming 'api_limit' stores the user's limit
+
+        # Get current date and time
         now = datetime.now()
+
+        # Calculate the first day of this month
+        first_day_of_this_month = now.replace(day=1)
+
+        # Get last month's date range
         last_month = now - timedelta(days=30)
-        last_month_calls = APIUsage.objects.filter(user=request.user, timestamp__gte=last_month).count()
         previous_month_start = last_month - timedelta(days=30)
-        previous_month_calls = APIUsage.objects.filter(user=request.user, timestamp__gte=previous_month_start, timestamp__lt=last_month).count()
-        if previous_month_calls > 0:
-            percentage_change = ((last_month_calls - previous_month_calls) / previous_month_calls) * 100
+
+        # Fetch API calls for this month
+        api_calls_this_month = APIUsage.objects.filter(user=request.user, timestamp__gte=first_day_of_this_month)
+        api_calls_this_month_count = api_calls_this_month.count()
+
+        # Successful and failed API calls for this month
+        api_calls_this_month_success = api_calls_this_month.filter(status='SUCCESS').count()
+        api_calls_this_month_error = api_calls_this_month.filter(status='FAILURE').count()
+
+        # Fetch API calls for last month
+        last_month_calls = APIUsage.objects.filter(user=request.user, timestamp__gte=last_month)
+        last_month_calls_count = last_month_calls.count()
+
+        # Successful and failed API calls for last month
+        last_month_calls_success = last_month_calls.filter(status='SUCCESS').count()
+        last_month_calls_error = last_month_calls.filter(status='FAILURE').count()
+
+        # Calculate percentage changes for this month vs last month
+        if last_month_calls_count > 0:
+            percentage_change = ((api_calls_this_month_count - last_month_calls_count) / last_month_calls_count) * 100
+        if last_month_calls_success > 0:
+            api_calls_success_change = ((api_calls_this_month_success - last_month_calls_success) / last_month_calls_success) * 100
+        if last_month_calls_error > 0:
+            api_calls_error_change = ((api_calls_this_month_error - last_month_calls_error) / last_month_calls_error) * 100
+
+        # Prepare the stats dictionary
         api_usage_stats = {
-            'total_calls': total_calls,
-            'last_month_calls': last_month_calls,
-            'percentage_change': percentage_change,
+            'api_calls_this_month': api_calls_this_month_count,
+            'api_calls_this_month_change_from_last_month': round(percentage_change, 2),
+            'api_calls_this_month_success': api_calls_this_month_success,
+            'api_calls_this_month_success_change_from_last_month': round(api_calls_success_change, 2),
+            'api_calls_this_month_error': api_calls_this_month_error,
+            'api_calls_this_month_error_change_from_last_month': round(api_calls_error_change, 2),
+            'subscription_limit': user_subscription_limit
         }
+
     return render(request, 'users/dashboard.html', {
         'segment': 'dashboard',
         'has_active_subscription': has_active_subscription,
         'api_usage_stats': api_usage_stats,
     })
+
 
 @login_required
 def mark_ip_as_trusted(request, ip_id):
