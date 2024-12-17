@@ -31,6 +31,7 @@ urlpatterns = [
     path('api-keys/<int:key_id>/delete/', views.delete_api_key, name='delete_api_key'),
     
     path('connections/', views.connections, name='connections'),
+    path('add_connection/', views.add_connection, name='add_connection'),
     path('salesforce/login/', views.salesforce_login, name='salesforce_login'),
     path('salesforce/callback/', views.salesforce_callback, name='salesforce_callback'),
     path('salesforce/save-tokens/', views.save_salesforce_tokens, name='save_salesforce_tokens'),
