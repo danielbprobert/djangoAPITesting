@@ -11,9 +11,13 @@ from pptx import Presentation
 from reportlab.pdfgen import canvas
 from simple_salesforce import Salesforce
 import requests
+from rest_framework.permissions import IsAuthenticated
+from .authentication import CustomTokenAuthentication
 
 
 class DocumentProcessingView(APIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         session_id = request.data.get("sessionId")
         document_id = request.data.get("documentId")

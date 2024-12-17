@@ -162,3 +162,12 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your-default-secret
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your-default-secret-key')
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apiv1.authentication.CustomTokenAuthentication',  
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
