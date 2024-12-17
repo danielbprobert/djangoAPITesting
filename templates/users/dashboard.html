@@ -1,7 +1,5 @@
 {% extends 'layouts/base.html' %}
-
 {% block title %} Dashboard {% endblock title %}
-
 {% block content %}
 <div class="header pb-6 d-flex align-items-center" 
      style="min-height: 250px; background-image: url(/static/img/cover.jpg); background-size: cover; background-position: center top;">
@@ -32,7 +30,6 @@
         </div>
         <div class="card-body">
           <div class="mt-4">
-            <h2>Subscription Status</h2>
             {% if has_active_subscription %}
                 <p>You have an active subscription.</p>
             {% else %}
@@ -115,14 +112,42 @@
           </div>
           {% endif %}
 
+          <!-- Recent API Calls Table -->
+          {% if recent_api_calls %}
+          <h3>Recent API Calls</h3>
+          <div class="table-responsive">
+            <table class="table align-items-center table-flush">
+              <thead class="thead-light">
+                <tr>
+                  <th scope="col">Timestamp</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for call in recent_api_calls %}
+                  <tr>
+                    <td>{{ call.timestamp }}</td>
+                    <td>{{ call.status }}</td>
+                    <td>{{ call.details }}</td> <!-- Assuming your APIUsage model has a 'details' field -->
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3">No recent API usage data available.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p>No recent API usage data available.</p>
+          {% endif %}
+          
         </div>
       </div>
     </div>
   </div>
-
   {% include "includes/footer.html" %}
-
 </div>
 {% endblock content %}
-
 {% block javascripts %}{% endblock javascripts %}

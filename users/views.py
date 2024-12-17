@@ -316,6 +316,11 @@ def ip_management(request):
     })
 
 
+from datetime import datetime, timedelta
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import UserSubscription, APIUsage
+
 @login_required
 def dashboard(request):
     has_active_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).exists()
@@ -324,40 +329,32 @@ def dashboard(request):
     api_calls_success_change = 0
     api_calls_error_change = 0
     user_subscription_limit = 0
+    recent_api_calls = None 
 
     if has_active_subscription:
-        # Get the user's active subscription and the related SubscriptionOption
         user_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).first()
         if user_subscription and user_subscription.subscription_option:
-            user_subscription_limit = user_subscription.subscription_option.api_limit  # Fetch the api_limit from SubscriptionOption
+            user_subscription_limit = user_subscription.subscription_option.api_limit 
 
-        # Get current date and time
         now = datetime.now()
 
-        # Calculate the first day of this month
         first_day_of_this_month = now.replace(day=1)
 
-        # Get last month's date range
         last_month = now - timedelta(days=30)
         previous_month_start = last_month - timedelta(days=30)
 
-        # Fetch API calls for this month
         api_calls_this_month = APIUsage.objects.filter(user=request.user, timestamp__gte=first_day_of_this_month)
         api_calls_this_month_count = api_calls_this_month.count()
 
-        # Successful and failed API calls for this month
         api_calls_this_month_success = api_calls_this_month.filter(status='SUCCESS').count()
         api_calls_this_month_error = api_calls_this_month.filter(status='FAILURE').count()
 
-        # Fetch API calls for last month
         last_month_calls = APIUsage.objects.filter(user=request.user, timestamp__gte=last_month)
         last_month_calls_count = last_month_calls.count()
 
-        # Successful and failed API calls for last month
         last_month_calls_success = last_month_calls.filter(status='SUCCESS').count()
         last_month_calls_error = last_month_calls.filter(status='FAILURE').count()
 
-        # Calculate percentage changes for this month vs last month
         if last_month_calls_count > 0:
             percentage_change = ((api_calls_this_month_count - last_month_calls_count) / last_month_calls_count) * 100
         if last_month_calls_success > 0:
@@ -365,7 +362,8 @@ def dashboard(request):
         if last_month_calls_error > 0:
             api_calls_error_change = ((api_calls_this_month_error - last_month_calls_error) / last_month_calls_error) * 100
 
-        # Prepare the stats dictionary
+        recent_api_calls = APIUsage.objects.filter(user=request.user).order_by('-timestamp')[:30]
+
         api_usage_stats = {
             'api_calls_this_month': api_calls_this_month_count,
             'api_calls_this_month_change_from_last_month': round(percentage_change, 2),
@@ -380,7 +378,9 @@ def dashboard(request):
         'segment': 'dashboard',
         'has_active_subscription': has_active_subscription,
         'api_usage_stats': api_usage_stats,
+        'recent_api_calls': recent_api_calls 
     })
+
 
 
 @login_required
