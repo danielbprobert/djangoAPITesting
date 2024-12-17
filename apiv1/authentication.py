@@ -1,7 +1,7 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth.models import User
-from .models import APIKeys
+from users.models import APIKey
 
 class CustomTokenAuthentication(BaseAuthentication):
     """
@@ -23,8 +23,8 @@ class CustomTokenAuthentication(BaseAuthentication):
 
         # Validate token
         try:
-            api_key = APIKeys.objects.get(key=token)
-        except APIKeys.DoesNotExist:
+            api_key = APIKey.objects.get(key=token)
+        except APIKey.DoesNotExist:
             raise AuthenticationFailed("Invalid or expired token.")
 
         return (api_key.user, token)  # Return user and token
