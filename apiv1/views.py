@@ -108,7 +108,6 @@ class DocumentProcessingView(APIView):
 
         # Fetch file metadata
         version_data_relative_url = content_version["records"][0]["VersionData"]
-        capture_message(f"Fetching VersionData from URL: {version_data_url}", level="info")
         file_name = content_version["records"][0]["Title"]
         file_extension = content_version["records"][0]["FileExtension"]
 
