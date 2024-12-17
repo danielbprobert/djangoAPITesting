@@ -49,9 +49,9 @@
                     <div class="form-group">
                         <label for="instance_url">Instance URL</label>
                         <select id="instance_url" name="instance_url" class="form-control" required onchange="toggleCustomUrlField()">
-                            <option value="https://login.salesforce.com" {% if form.instance_url.value == 'https://login.salesforce.com' %} selected {% endif %}>https://login.salesforce.com</option>
-                            <option value="https://test.salesforce.com" {% if form.instance_url.value == 'https://test.salesforce.com' %} selected {% endif %}>https://test.salesforce.com</option>
-                            <option value="https://custom.my.salesforce.com" {% if form.instance_url.value == 'https://custom.my.salesforce.com' %} selected {% endif %}>https://custom.my.salesforce.com</option>
+                            <option value="https://login.salesforce.com" {% if form.instance_url.value == 'https://login.salesforce.com' %} selected {% endif %}>https://login.salesforce.com (Production)</option>
+                            <option value="https://test.salesforce.com" {% if form.instance_url.value == 'https://test.salesforce.com' %} selected {% endif %}>https://test.salesforce.com (Sandbox)</option>
+                            <option value="https://custom.my.salesforce.com" {% if form.instance_url.value == 'https://custom.my.salesforce.com' %} selected {% endif %}>https://custom.my.salesforce.com (MyDomain / ScratchOrg / Developer)</option>
                         </select>
                     </div>
         
