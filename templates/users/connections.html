@@ -28,15 +28,29 @@
                 <h3>Manage Salesforce Connections</h3>
             </div>
             <div class="card-body">
-                <ul id="salesforce-connections">
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Unique Id</th>
+                      <th>Instance URL</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {% for connection in user.salesforce_connections.all %}
-                        <li>
-                            <p><strong>{{ connection.connection_name }}</strong></p>
-                            <p>Instance URL: {{ connection.instance_url }}</p>
-                            <button class="btn btn-danger" onclick="disconnectConnection('{{ connection.id }}')">Disconnect</button>
-                        </li>
+                    <tr>
+                      <td>{{ connection.connection_name }}</td>
+                      <td>{{ connection.connection_id }}</td>
+                      <td>{{ connection.connection.instance_url }}</td>
+                      <td>
+                        <button class="btn btn-danger" onclick="disconnectConnection('{{ connection.id }}')">Disconnect</button>
+                      </td>
+                    </tr>
                     {% endfor %}
-                </ul>
+                  </tbody>
+                </table>
                 <hr>
                 <form id="add-connection-form" method="POST" action="{% url 'salesforce_login' %}">
                     {% csrf_token %}
