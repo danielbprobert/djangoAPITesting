@@ -142,4 +142,4 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your-default-secret-key')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your-default-secret-key')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your-default-secret-key')
 
-
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
