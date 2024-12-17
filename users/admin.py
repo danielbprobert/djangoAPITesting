@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, APIKey, APIUsage, TrustedIP, UserChangeAudit, SalesforceConnection
+from .models import CustomUser, APIKey, APIUsage, TrustedIP, UserChangeAudit, SalesforceConnection, ProcessLog
 
 class APIKeyInline(admin.TabularInline):
     model = APIKey
@@ -38,6 +38,13 @@ class UserChangeAuditInline(admin.TabularInline):
     def has_add_permission(self, request, obj):
         """Disallow adding new audit records directly."""
         return False
+    
+class ProcessLogInline(admin.TabularInline):
+    model = ProcessLog
+    extra = 0  # No extra empty rows
+    fields = ('step_name', 'start_time', 'end_time', 'duration_seconds', 'status', 'error_message')
+    readonly_fields = ('step_name', 'start_time', 'end_time', 'duration_seconds', 'status', 'error_message')
+    show_change_link = True
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -73,4 +80,16 @@ class SalesforceConnectionAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at'),
         }),
     )
+
+@admin.register(APIUsage)
+class APIUsageAdmin(admin.ModelAdmin):
+    list_display = ('user', 'api_key', 'status', 'timestamp', 'process_status', 'process_start_time', 'process_end_time', 'process_duration')
+    list_filter = ('status', 'process_status', 'user')
+    search_fields = ('user__username', 'sf_document_id')
+    inlines = [ProcessLogInline]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # When editing an existing APIUsage object
+            return self.readonly_fields + ('process_start_time', 'process_end_time', 'process_duration', 'process_status')
+        return self.readonly_fields
 
