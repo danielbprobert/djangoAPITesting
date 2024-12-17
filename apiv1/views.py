@@ -17,12 +17,9 @@ class DocumentProcessingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        capture_message("DocumentProcessingView: API POST request received", level="info")
         
         document_id = request.data.get("documentId")
         organisation_id = request.data.get("organisationId")
-
-        capture_message(f"Processing documentId: {document_id}, organisationId: {organisation_id}", level="info")
 
         if not document_id or not organisation_id:
             self.log_api_usage(request.user, None, document_id, "FAILURE", request)
@@ -86,7 +83,6 @@ class DocumentProcessingView(APIView):
 
         # Query for file details
         query = f"SELECT VersionData, Title, FileExtension FROM ContentVersion WHERE Id = '{document_id}'"
-        capture_message(f"Executing Salesforce Query: {query}", level="info")
         content_version = sf.query(query)
 
         if not content_version["records"]:
@@ -99,7 +95,6 @@ class DocumentProcessingView(APIView):
 
         # Construct the full file download URL
         version_data_url = f"{instance_url}{version_data_relative_url}"
-        capture_message(f"Fetching file content from URL: {version_data_url}", level="info")
 
         # Fetch the file content using the access token
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -147,10 +142,8 @@ class DocumentProcessingView(APIView):
                 sf_document_id=document_id,
                 status=status,
             )
-            capture_message(f"API Usage logged: user={user}, status={status}, documentId={document_id}", level="info")
         except Exception as e:
             capture_exception(e)
-            capture_message("Failed to log API usage", level="error")
 
     def get_token_from_request(self, request):
         """
