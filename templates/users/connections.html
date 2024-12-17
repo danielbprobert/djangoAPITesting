@@ -23,50 +23,56 @@
 <div class="container-fluid mt--6">
   <div class="row">
     <div class="col-xl-12 order-xl-1">
-        <div class="card">
-            <div class="card-header">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col-8">
                 <h3>Manage Salesforce Connections</h3>
             </div>
             <div class="col-4 text-right">
               <a class="btn btn-sm btn-primary" href="{% url 'password_reset' %}">Add Connection</a>
             </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Organisation Id</th>
-                      <th>Org Type</th>
-                      <th>Instance URL</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for connection in user.salesforce_connections.all %}
-                    <tr>
-                      <td>{{ connection.connection_name }}</td>
-                      <td>{{ connection.organization_id }}</td>
-                      <td>{{ connection.org_type }}</td>
-                      <td>{{ connection.instance_url }}</td>
-                      <td>
-                        <button class="btn btn-danger" onclick="disconnectConnection('{{ connection.id }}')">Disconnect</button>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-                <hr>
-                <form id="add-connection-form" method="POST" action="{% url 'salesforce_login' %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="connection-name">Connection Name</label>
-                        <input type="text" id="connection-name" name="connection_name" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add New Salesforce Connection</button>
-                </form>
-            </div>
+          </div>
         </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Organisation Id</th>
+                    <th>Org Type</th>
+                    <th>Instance URL</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for connection in user.salesforce_connections.all %}
+                  <tr>
+                    <td>{{ connection.connection_name }}</td>
+                    <td>{{ connection.organization_id }}</td>
+                    <td>{{ connection.org_type }}</td>
+                    <td>{{ connection.instance_url }}</td>
+                    <td>
+                      <button class="btn btn-danger" onclick="disconnectConnection('{{ connection.id }}')">Disconnect</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <hr>
+              <form id="add-connection-form" method="POST" action="{% url 'salesforce_login' %}">
+                  {% csrf_token %}
+                  <div class="form-group">
+                      <label for="connection-name">Connection Name</label>
+                      <input type="text" id="connection-name" name="connection_name" class="form-control" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Add New Salesforce Connection</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
   {% include "includes/footer.html" %}
