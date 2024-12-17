@@ -44,24 +44,37 @@
 {% block javascripts %}
 <script>
     window.onload = function () {
+        // Get the hash parameters from the URL (the part after the #)
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
         const accessToken = hashParams.get('access_token');
         const instanceUrl = hashParams.get('instance_url');
 
+        // Check if both access_token and instance_url are available
         if (accessToken && instanceUrl) {
+            // Send the access token and instance URL to the server
             fetch('/salesforce/save-tokens/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': '{{ csrf_token }}'  // Ensure CSRF token is included
                 },
                 body: JSON.stringify({ access_token: accessToken, instance_url: instanceUrl })
-            }).then(response => {
+            })
+            .then(response => {
                 if (response.ok) {
-                    window.location = '/connections/';
+                    window.location = '/connections/';  // Redirect after successful save
                 } else {
-                    alert('Failed to add Salesforce connection.');
+                    return response.json();  // To read the error message from the response
                 }
+            })
+            .then(data => {
+                if (data.error) {
+                    alert('Failed to add Salesforce connection: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving the Salesforce connection.');
             });
         } else {
             alert('Missing Salesforce tokens.');
