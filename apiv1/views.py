@@ -94,7 +94,7 @@ class DocumentProcessingView(APIView):
         # num_characters = len(text)
         return text, num_pages, 0
 
-    def fetch_file_from_salesforce(self, session_id, document_id, transaction_id, instance_url, fetch_file_log):
+    def fetch_file_from_salesforce(self, session_id, document_id, instance_url):
         sf = Salesforce(instance_url=instance_url, session_id=session_id)
 
         content_version = sf.query(
