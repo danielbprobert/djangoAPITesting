@@ -9,7 +9,7 @@ sentry_sdk.init(
     dsn=config('SENTRY_SDK_KEY', default='your-default-secret-key'),
     integrations=[DjangoIntegration()],
     traces_sample_rate=1.0,
-    send_default_pii=False,
+    send_default_pii=True,
 )
 
 # HSTS Settings
