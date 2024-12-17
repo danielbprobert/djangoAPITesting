@@ -12,6 +12,12 @@ sentry_sdk.init(
     send_default_pii=False,
 )
 
+# HSTS Settings
+SECURE_HSTS_SECONDS = 31536000  
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True 
+SECURE_HSTS_PRELOAD = True 
+SECURE_SSL_REDIRECT = True 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
