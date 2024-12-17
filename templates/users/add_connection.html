@@ -61,6 +61,7 @@
                         <input type="url" id="custom_instance_url" name="custom_instance_url" class="form-control" placeholder="Enter custom Salesforce URL" {% if form.instance_url.value == 'custom.salesforce.com' %} required {% endif %}>
                     </div>
                 <button type="submit" class="btn btn-primary">Add New Salesforce Connection</button>
+                <a href="{% url 'connections' %}" class="btn btn-sm btn-primary">Cancel</a>
             </form>
           </div>
         </div>
