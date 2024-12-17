@@ -12,9 +12,11 @@ from reportlab.pdfgen import canvas
 from simple_salesforce import Salesforce
 import requests
 from rest_framework.permissions import IsAuthenticated
-from .authentication import CustomTokenAuthentication
+from django.http import StreamingHttpResponse
 from sentry_sdk import capture_exception, capture_message
+from .authentication import CustomTokenAuthentication
 from users.models import SalesforceConnection
+
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
@@ -38,7 +40,7 @@ class DocumentProcessingView(APIView):
         # Fetch SalesforceConnection for the user using organisation_id
         try:
             connection = SalesforceConnection.objects.get(
-                user=request.user, 
+                user=request.user,
                 organization_id=organisation_id
             )
         except SalesforceConnection.DoesNotExist:
@@ -48,43 +50,10 @@ class DocumentProcessingView(APIView):
             )
 
         try:
-            # Fetch file using Salesforce details
-            file_path = self.fetch_file_from_salesforce(
+            # Stream the file content directly
+            return self.stream_file_from_salesforce(
                 connection.access_token, document_id, connection.instance_url
             )
-
-            # Process the file
-            file_extension = os.path.splitext(file_path)[1].lower()
-            pdf_path = None
-
-            if file_extension == ".pdf":
-                pdf_path = file_path
-            elif file_extension in [".jpg", ".jpeg", ".png"]:
-                pdf_path = self.convert_image_to_pdf(file_path)
-            elif file_extension == ".docx":
-                pdf_path = self.convert_docx_to_pdf(file_path)
-            elif file_extension in [".xls", ".xlsx"]:
-                pdf_path = self.convert_excel_to_pdf(file_path)
-            elif file_extension == ".pptx":
-                pdf_path = self.convert_ppt_to_pdf(file_path)
-            else:
-                return Response(
-                    {"error": "Unsupported file type"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # Extract text and return response
-            parsed_text, num_pages, num_characters = self.extract_text_with_ocr(pdf_path)
-
-            return Response(
-                {
-                    "numPages": num_pages,
-                    "numCharacters": num_characters,
-                    "parsedText": parsed_text,
-                },
-                status=status.HTTP_200_OK,
-            )
-
         except Exception as e:
             capture_exception(e)
             return Response(
@@ -92,13 +61,13 @@ class DocumentProcessingView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def fetch_file_from_salesforce(self, access_token, document_id, instance_url):
+    def stream_file_from_salesforce(self, access_token, document_id, instance_url):
         """
-        Fetch the file's content from Salesforce using access_token and documentId.
+        Stream the file content directly from Salesforce using access_token and documentId.
         """
         sf = Salesforce(instance_url=instance_url, session_id=access_token)
 
-        # Query the ContentVersion for the specified document
+        # Query for file details
         query = f"SELECT VersionData, Title, FileExtension FROM ContentVersion WHERE Id = '{document_id}'"
         capture_message(f"Executing Salesforce Query: {query}", level="info")
         content_version = sf.query(query)
@@ -106,28 +75,50 @@ class DocumentProcessingView(APIView):
         if not content_version["records"]:
             raise ValueError(f"No file found for DocumentId {document_id}")
 
-        # Fetch file metadata
+        # Get file metadata
         version_data_relative_url = content_version["records"][0]["VersionData"]
         file_name = content_version["records"][0]["Title"]
         file_extension = content_version["records"][0]["FileExtension"]
 
-        # Construct full URL to fetch the file
+        # Construct the full file download URL
         version_data_url = f"{instance_url}{version_data_relative_url}"
-        capture_message(f"Fetching VersionData from URL: {version_data_url}", level="info")
-        # Perform the request with Bearer token
+        capture_message(f"Fetching file content from URL: {version_data_url}", level="info")
+
+        # Fetch the file content using the access token
         headers = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(version_data_url, headers=headers, stream=True)
-        
+
         if response.status_code != 200:
             raise ValueError(f"Failed to fetch file content. HTTP Status {response.status_code}")
 
-        # Save the file to a temporary location
-        file_path = os.path.join(settings.MEDIA_ROOT, f"{file_name}.{file_extension}")
-        with open(file_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                f.write(chunk)
+        # Stream the file content back to the client
+        content_type = self.get_content_type(file_extension)
+        response_headers = {
+            'Content-Disposition': f'attachment; filename="{file_name}.{file_extension}"',
+            'Content-Type': content_type,
+        }
 
-        return file_path
+        return StreamingHttpResponse(
+            streaming_content=response.iter_content(chunk_size=1024),
+            headers=response_headers,
+            status=200
+        )
+
+    def get_content_type(self, file_extension):
+        """
+        Return the appropriate content type based on file extension.
+        """
+        content_types = {
+            "pdf": "application/pdf",
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "png": "image/png",
+            "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "txt": "text/plain",
+        }
+        return content_types.get(file_extension.lower(), "application/octet-stream")
 
     def extract_text_with_ocr(self, pdf_path):
         """
