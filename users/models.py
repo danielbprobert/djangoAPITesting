@@ -56,6 +56,7 @@ class SalesforceConnection(models.Model):
     refresh_token = models.CharField(max_length=255, blank=True, null=True)
     instance_url = models.URLField()
     authenticated = models.BooleanField(default=False)
+    organization_id = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

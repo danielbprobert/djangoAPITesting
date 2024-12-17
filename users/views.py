@@ -18,6 +18,7 @@ from django.utils.timezone import now
 from datetime import datetime, timedelta
 import csv
 from decouple import config
+import requests
 
 
 SALESFORCE_CLIENT_ID = config('SALESFORCE_CLIENT_ID', default='your-default-secret-key')
@@ -32,6 +33,23 @@ def disconnect_salesforce_connection(request, connection_id):
         return JsonResponse({'success': 'Salesforce connection removed successfully'})
     except SalesforceConnection.DoesNotExist:
         return JsonResponse({'error': 'Connection not found'}, status=404)
+    
+def get_salesforce_organization_id(access_token, instance_url):
+    """
+    Fetch the Salesforce user's organization ID using the access token.
+    """
+    user_info_url = f"{instance_url}/services/oauth2/userinfo"
+    headers = {
+        'Authorization': f'Bearer {access_token}'
+    }
+    
+    response = requests.get(user_info_url, headers=headers)
+    
+    if response.status_code == 200:
+        user_info = response.json()
+        return user_info.get('organization_id')  # Extract organization ID
+    else:
+        return None
 
 @csrf_exempt
 @login_required
@@ -41,15 +59,26 @@ def save_salesforce_tokens(request):
         access_token = data.get('access_token')
         instance_url = data.get('instance_url')
         connection_name = request.session.get('connection_name')
+        
         if not access_token or not instance_url or not connection_name:
             return JsonResponse({'error': 'Missing required data'}, status=400)
+        
+        # Fetch the organization ID
+        organization_id = get_salesforce_organization_id(access_token, instance_url)
+        
+        if not organization_id:
+            return JsonResponse({'error': 'Failed to fetch Salesforce organization ID'}, status=400)
+        
+        # Create the SalesforceConnection object
         SalesforceConnection.objects.create(
             user=request.user,
             connection_name=connection_name,
             access_token=access_token,
             instance_url=instance_url,
             authenticated=True,
+            organization_id=organization_id  # Store the organization ID
         )
+        
         return JsonResponse({'success': 'Salesforce connection added successfully'})
 
 @login_required
