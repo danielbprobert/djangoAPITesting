@@ -112,7 +112,7 @@ class DocumentProcessingView(APIView):
         file_extension = content_version["records"][0]["FileExtension"]
 
         # Construct full URL to fetch the file
-        version_data_url = f"{instance_url}/services/data/v{sf.sf_version}{version_data_relative_url}"
+        version_data_url = f"{instance_url}{version_data_relative_url}"
         capture_message(f"Fetching VersionData from URL: {version_data_url}", level="info")
         # Perform the request with Bearer token
         headers = {"Authorization": f"Bearer {access_token}"}
