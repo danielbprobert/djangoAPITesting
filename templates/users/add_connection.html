@@ -31,14 +31,35 @@
           <div class="card-body">
             <form id="add-connection-form" method="POST" action="{% url 'salesforce_login' %}">
                 {% csrf_token %}
-                <div class="form-group">
-                    <label for="connection-name">Connection Name</label>
-                    <input type="text" id="connection-name" name="connection_name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="connection-name">Environment Type</label>
-                    <input type="text" id="connection-name" name="org_type" class="form-control" required>
-                </div>
+                    <div class="form-group">
+                        <label for="connection-name">Connection Name</label>
+                        <input type="text" id="connection-name" name="connection_name" class="form-control" required>
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="org_type">Environment Type</label>
+                        <select id="org_type" name="org_type" class="form-control" required>
+                            <option value="Production" {% if form.org_type.value == 'Production' %} selected {% endif %}>Production</option>
+                            <option value="Sandbox" {% if form.org_type.value == 'Sandbox' %} selected {% endif %}>Sandbox</option>
+                            <option value="Developer" {% if form.org_type.value == 'Developer' %} selected {% endif %}>Developer</option>
+                            <option value="ScratchOrg" {% if form.org_type.value == 'ScratchOrg' %} selected {% endif %}>ScratchOrg</option>
+                        </select>
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="instance_url">Instance URL</label>
+                        <select id="instance_url" name="instance_url" class="form-control" required onchange="toggleCustomUrlField()">
+                            <option value="login.salesforce.com" {% if form.instance_url.value == 'login.salesforce.com' %} selected {% endif %}>login.salesforce.com</option>
+                            <option value="test.salesforce.com" {% if form.instance_url.value == 'test.salesforce.com' %} selected {% endif %}>test.salesforce.com</option>
+                            <option value="custom.salesforce.com" {% if form.instance_url.value == 'custom.salesforce.com' %} selected {% endif %}>custom.salesforce.com</option>
+                        </select>
+                    </div>
+        
+                    <!-- Custom URL input (conditionally shown) -->
+                    <div class="form-group" id="custom-url-field" style="display: none;">
+                        <label for="custom_instance_url">Custom Salesforce URL</label>
+                        <input type="url" id="custom_instance_url" name="custom_instance_url" class="form-control" placeholder="Enter custom Salesforce URL" {% if form.instance_url.value == 'custom.salesforce.com' %} required {% endif %}>
+                    </div>
                 <button type="submit" class="btn btn-primary">Add New Salesforce Connection</button>
             </form>
           </div>
