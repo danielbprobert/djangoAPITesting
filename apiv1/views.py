@@ -14,7 +14,7 @@ import requests
 from rest_framework.permissions import IsAuthenticated
 from .authentication import CustomTokenAuthentication
 from sentry_sdk import capture_exception, capture_message
-from .models import SalesforceConnection
+from users.models import SalesforceConnection
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
