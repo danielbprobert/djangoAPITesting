@@ -60,7 +60,7 @@ def salesforce_login(request):
     request.session['connection_name'] = connection_name
     salesforce_auth_url = (
         f"https://login.salesforce.com/services/oauth2/authorize?"
-        f"response_type=code&client_id={SALESFORCE_CLIENT_ID}&redirect_uri={SALESFORCE_CALLBACK_URL}"    
+        f"response_type=token&client_id={SALESFORCE_CLIENT_ID}&redirect_uri={SALESFORCE_CALLBACK_URL}"    
     )
     return redirect(salesforce_auth_url)
 
