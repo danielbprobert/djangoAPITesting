@@ -13,17 +13,20 @@ from simple_salesforce import Salesforce
 import requests
 from rest_framework.permissions import IsAuthenticated
 from .authentication import CustomTokenAuthentication
+from sentry_sdk import capture_exception, capture_message
 
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
+        capture_message("DocumentProcessingView: API POST request received", level="info")
         session_id = request.data.get("sessionId")
         document_id = request.data.get("documentId")
         instance_url = request.data.get("instanceURL")
 
         if not session_id or not document_id or not instance_url:
+            capture_message("Missing required parameters in request", level="warning")
             return Response(
                 {"error": "Missing sessionId, documentId, or instanceURL"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -67,6 +70,7 @@ class DocumentProcessingView(APIView):
             )
 
         except Exception as e:
+            capture_exception(e)
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
