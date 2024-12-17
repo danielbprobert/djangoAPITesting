@@ -74,5 +74,28 @@
 {% endblock content %}
 
 
+
 {% block javascripts %}
+<script>
+    // JavaScript function to toggle the visibility of the custom URL field
+    function toggleCustomUrlField() {
+        var instanceUrl = document.getElementById("instance_url").value;
+        var customUrlField = document.getElementById("custom-url-field");
+        var customUrlInput = document.getElementById("custom_instance_url");
+
+        // If 'custom.salesforce.com' is selected, show the custom URL field
+        if (instanceUrl === "custom.salesforce.com") {
+            customUrlField.style.display = "block";
+            customUrlInput.required = true;  // Make the custom URL field required
+        } else {
+            customUrlField.style.display = "none";
+            customUrlInput.required = false;  // Remove the required attribute if not selected
+        }
+    }
+
+    // Call the function on page load to set the initial state
+    window.onload = function() {
+        toggleCustomUrlField();
+    }
+</script>
 {% endblock javascripts %}
