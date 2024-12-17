@@ -49,9 +49,9 @@
                     <div class="form-group">
                         <label for="instance_url">Instance URL</label>
                         <select id="instance_url" name="instance_url" class="form-control" required onchange="toggleCustomUrlField()">
-                            <option value="login.salesforce.com" {% if form.instance_url.value == 'login.salesforce.com' %} selected {% endif %}>login.salesforce.com</option>
-                            <option value="test.salesforce.com" {% if form.instance_url.value == 'test.salesforce.com' %} selected {% endif %}>test.salesforce.com</option>
-                            <option value="custom.salesforce.com" {% if form.instance_url.value == 'custom.salesforce.com' %} selected {% endif %}>custom.salesforce.com</option>
+                            <option value="https://login.salesforce.com" {% if form.instance_url.value == 'https://login.salesforce.com' %} selected {% endif %}>https://login.salesforce.com</option>
+                            <option value="https://test.salesforce.com" {% if form.instance_url.value == 'https://test.salesforce.com' %} selected {% endif %}>https://test.salesforce.com</option>
+                            <option value="https://custom.my.salesforce.com" {% if form.instance_url.value == 'https://custom.my.salesforce.com' %} selected {% endif %}>https://custom.my.salesforce.com</option>
                         </select>
                     </div>
         
@@ -84,7 +84,7 @@
         var customUrlInput = document.getElementById("custom_instance_url");
 
         // If 'custom.salesforce.com' is selected, show the custom URL field
-        if (instanceUrl === "custom.salesforce.com") {
+        if (instanceUrl === "https://custom.my.salesforce.com") {
             customUrlField.style.display = "block";
             customUrlInput.required = true;  // Make the custom URL field required
         } else {
