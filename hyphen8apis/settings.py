@@ -15,7 +15,7 @@ SECRET_KEY = config('SECRET_KEY', default='your-default-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['127.0.0.1','18.169.75.103']
+ALLOWED_HOSTS = ['127.0.0.1','textextract.hyphen8.com','localhost']
 
 
 # Application definition
