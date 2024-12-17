@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'subscriptions',
+    'apiv1',
 ]
 
 SITE_ID = 1

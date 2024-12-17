@@ -13,4 +13,5 @@ urlpatterns = [
     path('admin/login/', auth_views.LoginView.as_view(), name='admin_login'),
     path('', include('users.urls')),
     path("subscriptions/", include("subscriptions.urls")),
+    path('api/v1/', include('apiv1.urls')),
 ]
