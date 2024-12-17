@@ -65,7 +65,7 @@ def salesforce_login(request):
 
 @login_required
 def salesforce_callback(request):
-    return render(request, 'salesforce_callback.html')
+    return render(request, 'users/salesforce_callback.html')
 
 @login_required
 def apikeys(request):
