@@ -2,6 +2,12 @@ import os
 from pathlib import Path
 from decouple import config
 
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn=config('SENTRY_SDK_KEY', default='your-default-secret-key'),
+)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
