@@ -35,6 +35,27 @@
               <span class="nav-link-text">Subscription</span>
             </a>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'documentation' in segment %} active {% endif %}" href="#navbar-documentation">
+              <i class="ni ni-bag-17 text-primary"></i>
+              <span class="nav-link-text">Documentation</span>
+            </a>
+            <div class="collapse" id="navbar-documentation" style="">
+              <ul class="nav nav-sm flex-column">
+                <li class="nav-item">
+                    <a href="/maps-google.html" class="nav-link">
+                      <span class="sidenav-normal"> Authentication </span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/maps-vector.html" class="nav-link">
+                      <span class="sidenav-normal"> Process Document </span>
+                    </a>
+                </li>
+                </ul>
+            </div>
+          </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'logout' %}">
               <i class="ni ni-user-run text-red"></i>
