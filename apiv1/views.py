@@ -27,7 +27,7 @@ import shutil
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 class APIUsagePagination(PageNumberPagination):
-    page_size = 10
+    page_size = 10  # You can adjust this as needed
     page_size_query_param = 'page_size'
     max_page_size = 100
 
@@ -37,16 +37,22 @@ class UserAPIUsageLogsView(APIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            user = request.user
+            user = request.user  # Get the authenticated user
+
+            # Paginate API Usage Logs
             paginator = APIUsagePagination()
             api_usage_logs = APIUsage.objects.filter(user=user).order_by('-timestamp')  # Filter by user and order by timestamp
+            # Apply pagination to the queryset
             paginated_logs = paginator.paginate_queryset(api_usage_logs, request)
 
+            # Serialize the logs and include associated ProcessLogs
             data = self.get_api_usage_logs_serializer(paginated_logs)
 
+            # Return paginated response
             return paginator.get_paginated_response(data)
 
         except Exception as e:
+            # Log the exception in Sentry
             sentry_sdk.capture_exception(e)
             return Response({"detail": "An error occurred while fetching the logs."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
