@@ -125,6 +125,7 @@
                   <table class="table align-items-center table-flush">
                     <thead class="thead-light">
                       <tr>
+                        <th scope="col">Transaction Id</th>
                         <th scope="col">Timestamp</th>
                         <th scope="col">Status</th>
                         <th scope="col">DocumentId</th>
@@ -133,13 +134,16 @@
                     <tbody class="list">
                       {% for call in last_20_api_calls %}
                       <tr>
-                        <th scope="row">
+                        <td scope="row">
+                          {{ call.id }}
+                        </td>
+                        <td scope="row">
                           {{ call.timestamp }}
-                        </th>
-                        <td class="budget">
+                        </td>
+                        <td class="row">
                           {{ call.process_status }}
                         </td>
-                        <td>
+                        <td class="row">
                           {{ call.sf_document_id }}
                         </td>
                       </tr>
