@@ -167,23 +167,24 @@ class DocumentProcessingView(APIView):
             images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1)
             if not images:
                 message = f"No images generated for page {page_number + 1} from PDF."
-                capture_exception(Exception(message))
+                capture_exception(Exception(message))  # Wrap message in Exception
                 return ""
 
             ocr_text = ""
             for image_index, image in enumerate(images):
                 try:
-                    capture_exception(f"Processing OCR on page {page_number + 1}, image {image_index + 1}.")
                     ocr_text += pytesseract.image_to_string(image)
-                except Exception as e:
-                    message = f"OCR failed on page {page_number + 1}, image {image_index + 1}: {str(e)}"
-                    capture_exception(Exception(message))
+                except Exception as inner_e:
+                    # Log the error and include page and image details
+                    message = f"OCR failed on page {page_number + 1}, image {image_index + 1}: {str(inner_e)}"
+                    capture_exception(Exception(message))  # Wrap message in Exception
                     ocr_text += f"[OCR Error: {message}]"
             
             return ocr_text
         except Exception as e:
+            # Capture the outer-level error
             message = f"OCR process failed for page {page_number + 1}: {str(e)}"
-            capture_exception(Exception(message))
+            capture_exception(Exception(message))  # Wrap message in Exception
             return f"[OCR Process Error: {message}]"
 
     def extract_text_from_docx(self, file_path):
