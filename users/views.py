@@ -85,10 +85,18 @@ def save_salesforce_tokens(request):
 def salesforce_login(request):
     connection_name = request.POST.get('connection_name')
     org_type = request.POST.get('org_type')
-    instance_url = request.POST.get('instance_url')
+    instance_url = request.POST.get('instance_url')  # Standard instance URL
+    custom_instance_url = request.POST.get('custom_instance_url')  # Custom instance URL if provided
+
+    # Determine the final instance URL
+    if org_type == 'custom' and custom_instance_url:
+        instance_url = custom_instance_url
 
     if not connection_name:
         return JsonResponse({'error': 'Connection name is required'}, status=400)
+
+    if not instance_url:
+        return JsonResponse({'error': 'Instance URL is required'}, status=400)
 
     # Store the connection details in the SalesforceConnection model
     salesforce_connection = SalesforceConnection.objects.create(
@@ -96,14 +104,15 @@ def salesforce_login(request):
         connection_name=connection_name,
         org_type=org_type,
         instance_url=instance_url,
-        authenticated=False  # We will update this later when we get the access token
+        authenticated=False  # Will update this later when we get the access token
     )
 
     # Store the connection ID in the session to associate it with the current user session
     request.session['salesforce_connection_id'] = salesforce_connection.id
 
+    # Construct the Salesforce Auth URL using the final instance URL
     salesforce_auth_url = (
-        f"https://login.salesforce.com/services/oauth2/authorize?"
+        f"{instance_url}/services/oauth2/authorize?"
         f"response_type=token&client_id={SALESFORCE_CLIENT_ID}&redirect_uri={SALESFORCE_CALLBACK_URL}"
     )
 
