@@ -35,7 +35,7 @@ class DocumentProcessingView(APIView):
         transaction_id = str(uuid.uuid4())
 
         if not document_id or not organisation_id:
-            self.log_api_usage(request.user, None, document_id, "FAILURE", request)
+            self.log_api_usage(request.user, None, document_id, "FAILURE", request, transaction_id)
             return Response(
                 {"error": "Missing documentId or organisationId"},
                 status=status.HTTP_400_BAD_REQUEST,
