@@ -115,10 +115,18 @@
                   <table class="table align-items-center table-flush">
                     <thead class="thead">
                       <tr>
-                        <th scope="col">Transaction Id</th>
-                        <th scope="col">Timestamp</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">DocumentId</th>
+                        <th scope="col">
+                          <span class="text">Transaction Id</span>
+                        </th>
+                        <th scope="col">
+                          <span class="text">Timestamp</span>
+                        </th>
+                        <th scope="col">
+                          <span class="text">Status</span>
+                        </th>
+                        <th scope="col">
+                          <span class="text">DocumentId</span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody class="list">
@@ -126,17 +134,17 @@
                       <tr>
                         <td scope="">
                           <a href="{% url 'transaction_details' transaction_id=call.transaction_id %}">
-                            {{ call.transaction_id }}
+                            <span class="text">{{ call.transaction_id }}</span>
                           </a>
                         </td>
                         <td scope="">
-                          {{ call.timestamp }}
+                          <span class="text">{{ call.timestamp }}</span>
                         </td>
                         <td class="">
-                          {{ call.process_status }}
+                          <span class="text">{{ call.process_status }}</span>
                         </td>
                         <td class="">
-                          {{ call.sf_document_id }}
+                          <span class="text">{{ call.sf_document_id }}</span>
                         </td>
                       </tr>
                       {% endfor %}
