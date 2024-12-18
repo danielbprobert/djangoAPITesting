@@ -182,8 +182,8 @@ class DocumentProcessingView(APIView):
                         image = image.convert('RGB')
 
                     # Log the image info to ensure it's valid before OCR
-                    image_path = f"/media/ocr_image_page_{page_number + 1}_image_{image_index + 1}.png"
-                    image.save(image_path)  # Save the image to verify it's valid
+                    image_path = os.path.join(settings.MEDIA_ROOT, f"ocr_image_page_{page_number + 1}_image_{image_index + 1}.png")
+                    image.save(image_path)
                     print(f"Image saved for OCR debugging: {image_path}")
 
                     # Perform OCR using pytesseract, with optional config
