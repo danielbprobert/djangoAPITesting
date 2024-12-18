@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 import csv
 from decouple import config
 import requests
+from sentry_sdk import capture_message, capture_exception
 
 
 SALESFORCE_CLIENT_ID = config('SALESFORCE_CLIENT_ID', default='your-default-secret-key')
@@ -124,35 +125,46 @@ def salesforce_callback(request):
     return render(request, 'connections/salesforce_callback.html')
 
 @login_required
-@csrf_exempt  # Add CSRF exemption if you're not using CSRF tokens (but it's better to include them)
+@csrf_exempt
 def save_salesforce_tokens(request):
     if request.method != 'POST':
+        capture_message("Invalid request method for save_salesforce_tokens", level="warning")
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-    # Parse the JSON body
-    body = json.loads(request.body)
-    access_token = body.get('access_token')
-    instance_url = body.get('instance_url')
-
-    # Get the connection ID from the session
-    connection_id = request.session.get('salesforce_connection_id')
-
-    if not access_token or not instance_url:
-        return JsonResponse({'error': 'Missing Salesforce tokens'}, status=400)
-
-    # Get the SalesforceConnection object
     try:
-        salesforce_connection = SalesforceConnection.objects.get(id=connection_id, user=request.user)
-    except SalesforceConnection.DoesNotExist:
-        return JsonResponse({'error': 'Salesforce connection not found'}, status=404)
+        # Parse the JSON body
+        body = json.loads(request.body)
+        access_token = body.get('access_token')
+        instance_url = body.get('instance_url')
 
-    # Update the connection with the access token and instance URL
-    salesforce_connection.access_token = access_token
-    salesforce_connection.instance_url = instance_url
-    salesforce_connection.authenticated = True  # Mark the connection as authenticated
-    salesforce_connection.save()
+        # Log received tokens for debugging
+        capture_message(f"Received tokens: access_token={access_token}, instance_url={instance_url}", level="info")
 
-    return JsonResponse({'message': 'Salesforce connection saved successfully'})
+        # Get the connection ID from the session
+        connection_id = request.session.get('salesforce_connection_id')
+        if not connection_id:
+            capture_message("Salesforce connection ID is missing in session", level="error")
+            return JsonResponse({'error': 'Salesforce connection ID missing in session'}, status=400)
+
+        # Get the SalesforceConnection object
+        try:
+            salesforce_connection = SalesforceConnection.objects.get(id=connection_id, user=request.user)
+        except SalesforceConnection.DoesNotExist:
+            capture_exception(Exception(f"SalesforceConnection with ID {connection_id} not found for user {request.user}"))
+            return JsonResponse({'error': 'Salesforce connection not found'}, status=404)
+
+        # Update the connection with the access token and instance URL
+        salesforce_connection.access_token = access_token
+        salesforce_connection.instance_url = instance_url
+        salesforce_connection.authenticated = True  # Mark the connection as authenticated
+        salesforce_connection.save()
+
+        capture_message("Salesforce connection saved successfully", level="info")
+        return JsonResponse({'message': 'Salesforce connection saved successfully'})
+    except Exception as e:
+        # Capture the exception and report it to Sentry
+        capture_exception(e)
+        return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 def apikeys(request):
