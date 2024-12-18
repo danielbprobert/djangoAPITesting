@@ -9,8 +9,10 @@ import requests
 from rest_framework.permissions import IsAuthenticated
 from sentry_sdk import capture_exception
 from .authentication import CustomTokenAuthentication
-from users.models import SalesforceConnection, APIUsage, APIKey
+from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog  # Assuming ProcessLog is in users.models
 from datetime import datetime
+from contextlib import contextmanager
+import uuid
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
@@ -27,27 +29,32 @@ class DocumentProcessingView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Create the APIUsage entry
-        api_usage = self.log_api_usage(request.user, None, document_id, "PROCESSING", request)
+        # Create the APIUsage entry with a unique transaction_id
+        transaction_id = str(uuid.uuid4())
+        api_usage = self.log_api_usage(request.user, None, document_id, "PROCESSING", request, transaction_id)
         api_usage.process_start_time = datetime.now()
         api_usage.process_status = "PROCESSING"
         api_usage.save()
 
         try:
-            # Fetch Salesforce connection
-            connection = SalesforceConnection.objects.get(
-                user=request.user,
-                organization_id=organisation_id
-            )
+            with self.process_step(api_usage, 'Fetch Salesforce Connection'):
+                # Fetch Salesforce connection
+                connection = SalesforceConnection.objects.get(
+                    user=request.user,
+                    organization_id=organisation_id
+                )
 
-            # Fetch file from Salesforce
-            file_path = self.fetch_file_from_salesforce(connection.access_token, document_id, connection.instance_url)
+            with self.process_step(api_usage, 'Fetch File from Salesforce'):
+                # Fetch file from Salesforce
+                file_path = self.fetch_file_from_salesforce(connection.access_token, document_id, connection.instance_url)
 
-            # Process the file
-            parsed_text, num_pages, num_characters = self.process_file(file_path)
+            with self.process_step(api_usage, 'Process File'):
+                # Process the file
+                parsed_text, num_pages, num_characters = self.process_file(file_path)
 
             # Prepare response data
             response_data = {
+                "transactionId": transaction_id,  # Include transaction_id in response
                 "fileName": os.path.basename(file_path),
                 "numPages": num_pages,
                 "numCharacters": num_characters,
@@ -71,7 +78,7 @@ class DocumentProcessingView(APIView):
             api_usage.calculate_process_duration()
             api_usage.save()
 
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": str(e), "transactionId": transaction_id}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def fetch_file_from_salesforce(self, access_token, document_id, instance_url):
         """
@@ -132,7 +139,7 @@ class DocumentProcessingView(APIView):
         num_characters = len(text)
         return text, num_pages, num_characters
 
-    def log_api_usage(self, user, connection, document_id, status, request):
+    def log_api_usage(self, user, connection, document_id, status, request, transaction_id):
         """
         Logs the overall API usage details to the APIUsage model.
         """
@@ -140,13 +147,14 @@ class DocumentProcessingView(APIView):
             token = self.get_token_from_request(request)
             api_key = APIKey.objects.filter(key=token).first()
 
-            # Create APIUsage log
+            # Create APIUsage log with transaction_id
             api_usage = APIUsage.objects.create(
                 user=user,
                 api_key=api_key,
                 salesforce_connection=connection,
                 sf_document_id=document_id,
                 status=status,
+                transaction_id=transaction_id
             )
             return api_usage
         except Exception as e:
@@ -160,3 +168,28 @@ class DocumentProcessingView(APIView):
         if auth_header and auth_header.startswith("Token "):
             return auth_header.split()[1]
         return None
+
+    @contextmanager
+    def process_step(self, api_usage, step_name):
+        """
+        Context manager to log process steps.
+        """
+        process_log = ProcessLog.objects.create(
+            api_usage=api_usage,
+            step_name=step_name,
+            start_time=datetime.now(),
+            status='PROCESSING'
+        )
+        try:
+            yield
+            process_log.end_time = datetime.now()
+            process_log.status = 'SUCCESS'
+            process_log.calculate_duration()
+            process_log.save()
+        except Exception as e:
+            process_log.end_time = datetime.now()
+            process_log.status = 'FAILURE'
+            process_log.error_message = str(e)
+            process_log.calculate_duration()
+            process_log.save()
+            raise  # Re-raise the exception

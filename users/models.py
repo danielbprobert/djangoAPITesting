@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.utils.timezone import now
 from django.conf import settings
+import uuid
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
@@ -99,6 +100,8 @@ class APIUsage(models.Model):
     process_end_time = models.DateTimeField(null=True, blank=True)
     process_duration = models.FloatField(null=True, blank=True)  # duration in seconds
     process_status = models.CharField(max_length=10, null=True, blank=True)  # SUCCESS or FAILURE
+
+    transaction_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # Add this field
 
     def calculate_process_duration(self):
         if self.process_start_time and self.process_end_time:
