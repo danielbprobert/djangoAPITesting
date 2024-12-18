@@ -160,20 +160,31 @@ class DocumentProcessingView(APIView):
 
     def ocr_pdf_page(self, file_path, page_number):
         """
-        Perform OCR on a specific page of the PDF.
+        Perform OCR on a specific page of the PDF with enhanced debugging.
         """
-        # Convert the specific page of the PDF to an image
-        images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1)
+        try:
+            # Convert the specific page of the PDF to an image
+            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1)
+            if not images:
+                message = f"No images generated for page {page_number + 1} from PDF."
+                capture_exception(Exception(message))
+                return ""
 
-        if not images:
-            return ""  # If the page couldn't be converted to an image
-
-        ocr_text = ""
-        for image in images:
-            # Perform OCR on the image
-            ocr_text += pytesseract.image_to_string(image)
-
-        return ocr_text
+            ocr_text = ""
+            for image_index, image in enumerate(images):
+                try:
+                    capture_exception(f"Processing OCR on page {page_number + 1}, image {image_index + 1}.")
+                    ocr_text += pytesseract.image_to_string(image)
+                except Exception as e:
+                    message = f"OCR failed on page {page_number + 1}, image {image_index + 1}: {str(e)}"
+                    capture_exception(Exception(message))
+                    ocr_text += f"[OCR Error: {message}]"
+            
+            return ocr_text
+        except Exception as e:
+            message = f"OCR process failed for page {page_number + 1}: {str(e)}"
+            capture_exception(Exception(message))
+            return f"[OCR Process Error: {message}]"
 
     def extract_text_from_docx(self, file_path):
         document = Document(file_path)
