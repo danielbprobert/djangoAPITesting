@@ -446,9 +446,12 @@ def dashboard(request):
 @login_required
 def transaction_details(request, transaction_id):
     transaction = get_object_or_404(APIUsage, transaction_id=transaction_id, user=request.user)
+    process_logs = transaction.process_logs.all().order_by('-start_time')[:10]  # Fetch the last 10 logs
+
     return render(request, 'dashboard/transaction_details.html', {
         'segment': 'dashboard',
         'transaction': transaction,
+        'process_logs': process_logs,  # Pass the limited logs to the template
     })
 
 @login_required
