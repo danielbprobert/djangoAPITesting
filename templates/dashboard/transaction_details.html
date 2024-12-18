@@ -38,25 +38,24 @@
                         <div class="form-group">
                             <label class="form-control-label">Transaction Id</label>
                             <input type="text" disabled class="form-control" value="{{ transaction.id }}">
-                            
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="form-group">
-                            <label class="form-control-label" for="input-lastname">Timestamp</label>
-                            {{ transaction.timestamp }}
+                            <label class="form-control-label">Timestamp</label>
+                            <input type="text" disabled class="form-control" value="{{ transaction.timestamp }}">
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="form-group">
                             <label class="form-control-label" for="input-username">Status</label>
-                            {{ transaction.process_status }}
+                            <input type="text" disabled class="form-control" value="{{ transaction.process_status }}">
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="form-group">
                             <label class="form-control-label" for="input-email">Document Id</label>
-                            {{ transaction.sf_document_id }}
+                            <input type="text" disabled class="form-control" value="{{ transaction.sf_document_id }}">
                         </div>
                     </div>
                 </div>
