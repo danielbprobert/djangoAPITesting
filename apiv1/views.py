@@ -1,5 +1,6 @@
-from django.conf import settings
 import os
+from django.conf import settings
+from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,10 +14,9 @@ import requests
 from rest_framework.permissions import IsAuthenticated
 from sentry_sdk import capture_exception
 from .authentication import CustomTokenAuthentication
-from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog  
+from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
 from datetime import datetime
 from contextlib import contextmanager
-from django.utils import timezone
 import uuid
 
 class DocumentProcessingView(APIView):
@@ -40,6 +40,7 @@ class DocumentProcessingView(APIView):
         api_usage.process_status = "PROCESSING"
         api_usage.save()
 
+        file_path = None
         try:
             with self.process_step(api_usage, 'Fetch Salesforce Connection'):
                 connection = SalesforceConnection.objects.get(
@@ -77,6 +78,11 @@ class DocumentProcessingView(APIView):
             api_usage.save()
 
             return Response({"error": str(e), "transactionId": transaction_id}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        finally:
+            # Ensure the file is deleted from the server
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
 
     def fetch_file_from_salesforce(self, access_token, document_id, instance_url):
         sf = Salesforce(instance_url=instance_url, session_id=access_token)
