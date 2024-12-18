@@ -36,8 +36,9 @@
                     <div class="row">
                     <div class="col-lg-6">
                         <div class="form-group">
-                            <label class="form-control-label" for="input-firstname">Transaction Id</label>
-                            {{ transaction.id }}
+                            <label class="form-control-label">Transaction Id</label>
+                            <input type="text" disabled class="form-control" value="{{ transaction.id }}">
+                            
                         </div>
                     </div>
                     <div class="col-lg-6">
