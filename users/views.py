@@ -443,7 +443,13 @@ def dashboard(request):
         'last_20_api_calls': last_20_api_calls,
     })
 
-
+@login_required
+def transaction_details(request, transaction_id):
+    transaction = get_object_or_404(APIUsage, id=transaction_id, user=request.user)
+    return render(request, 'dashboard/transaction_details.html', {
+        'segment': 'dashboard',
+        'transaction': transaction,
+    })
 
 @login_required
 def mark_ip_as_trusted(request, ip_id):
