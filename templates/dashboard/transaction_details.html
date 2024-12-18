@@ -58,6 +58,24 @@
                             <input type="text" disabled class="form-control" value="{{ transaction.sf_document_id }}">
                         </div>
                     </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-control-label">Start time</label>
+                            <input type="text" disabled class="form-control" value="{{ transaction.process_start_time }}">
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-control-label" for="input-username">End time</label>
+                            <input type="text" disabled class="form-control" value="{{ transaction.process_end_time }}">
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-control-label" for="input-email">Duration</label>
+                            <input type="text" disabled class="form-control" value="{{ transaction.process_duration }}">
+                        </div>
+                    </div>
                 </div>
             </div>
           </div>
