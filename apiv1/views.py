@@ -232,6 +232,7 @@ class DocumentProcessingView(APIView):
                 salesforce_connection=connection,
                 sf_document_id=document_id,
                 status=status,
+                process_status=status,
                 transaction_id=transaction_id,
                 error_message=message,
             )
