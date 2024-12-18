@@ -1,17 +1,12 @@
 {% extends 'layouts/base.html' %}
-
 {% block title %} Dashboard {% endblock title %}
-
 {% block content %}
 <div class="header pb-6 d-flex align-items-center" 
      style="min-height: 100px">
-  <!-- Mask -->
   <span class="mask bg-gradient-default opacity-8"></span>
-  <!-- Header container -->
   <div class="container-fluid d-flex align-items-center">
   </div>
 </div>
-<!-- Page content -->
 <div class="container-fluid mt--6">
   <div class="row">
     <div class="col-xl-12 order-xl-1">
@@ -25,7 +20,6 @@
         </div>
         <div class="card-body">
           {% if has_active_subscription %}
-          
           {% else %}
             <div class="mt-4">
               <div class="alert alert-warning">
@@ -40,7 +34,6 @@
           <div class="row">
             <div class="col-xl-4 col-md-6">
               <div class="card card-stats">
-                <!-- Card body -->
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
@@ -62,7 +55,6 @@
             </div>
             <div class="col-xl-4 col-md-6">
               <div class="card card-stats">
-                <!-- Card body -->
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
@@ -84,7 +76,6 @@
             </div>
             <div class="col-xl-4 col-md-6">
               <div class="card card-stats">
-                <!-- Card body -->
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
@@ -159,8 +150,6 @@
       </div>
     </div>
   </div>
-
 </div>
 {% endblock content %}
-
 {% block javascripts %}{% endblock javascripts %}
