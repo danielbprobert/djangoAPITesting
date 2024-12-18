@@ -136,10 +136,7 @@ def save_salesforce_tokens(request):
         body = json.loads(request.body)
         access_token = body.get('access_token')
         instance_url = body.get('instance_url')
-
-        # Log received tokens for debugging
-        capture_message(f"Received tokens: access_token={access_token}, instance_url={instance_url}", level="info")
-
+        
         # Get the connection ID from the session
         connection_id = request.session.get('salesforce_connection_id')
         if not connection_id:
@@ -162,7 +159,6 @@ def save_salesforce_tokens(request):
         salesforce_connection.organization_id = organization_id
         salesforce_connection.save()
 
-        capture_message("Salesforce connection saved successfully", level="info")
         return JsonResponse({'message': 'Salesforce connection saved successfully'})
     except Exception as e:
         # Capture the exception and report it to Sentry
