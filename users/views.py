@@ -152,11 +152,14 @@ def save_salesforce_tokens(request):
         except SalesforceConnection.DoesNotExist:
             capture_exception(Exception(f"SalesforceConnection with ID {connection_id} not found for user {request.user}"))
             return JsonResponse({'error': 'Salesforce connection not found'}, status=404)
+        
+        organization_id = get_salesforce_organization_id(access_token, instance_url)
 
         # Update the connection with the access token and instance URL
         salesforce_connection.access_token = access_token
         salesforce_connection.instance_url = instance_url
         salesforce_connection.authenticated = True  # Mark the connection as authenticated
+        salesforce_connection.organization_id = organization_id
         salesforce_connection.save()
 
         capture_message("Salesforce connection saved successfully", level="info")
