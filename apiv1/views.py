@@ -33,6 +33,59 @@ from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
 
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
+class UserAPIUsageByTransactionView(APIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            transaction_id = request.query_params.get('transaction_id')
+
+            if not transaction_id:
+                return Response({"detail": "transaction_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            api_usage = APIUsage.objects.filter(transaction_id=transaction_id).first()
+
+            if not api_usage:
+                return Response({"detail": "APIUsage record not found for the provided transaction_id."}, status=status.HTTP_404_NOT_FOUND)
+
+            process_logs = ProcessLog.objects.filter(api_usage=api_usage)
+
+            data = self.get_api_usage_serializer(api_usage, process_logs)
+
+            return Response(data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response({"detail": "An error occurred while fetching the logs."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get_api_usage_serializer(self, api_usage, process_logs):
+        """
+        Serializes the APIUsage record and includes related ProcessLogs
+        """
+        process_logs_data = [
+            {
+                "step_name": process_log.step_name,
+                "start_time": process_log.start_time,
+                "end_time": process_log.end_time,
+                "duration_seconds": process_log.duration_seconds,
+                "status": process_log.status,
+                "error_message": process_log.error_message,
+            }
+            for process_log in process_logs
+        ]
+
+        return {
+            "user": api_usage.user.username,
+            "status": api_usage.process_status,
+            "timestamp": api_usage.timestamp,
+            "transaction_id": api_usage.transaction_id,
+            "error_message": api_usage.error_message,
+            "process_duration": api_usage.process_duration,
+            "document_id": api_usage.sf_document_id,
+            "process_step_logs": process_logs_data,
+        }
+
 class UserAPIUsageLogsView(APIView):
     authentication_classes = [CustomTokenAuthentication]
     permission_classes = [IsAuthenticated]
