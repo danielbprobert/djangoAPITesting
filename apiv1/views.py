@@ -164,11 +164,11 @@ class DocumentProcessingView(APIView):
 
     def ocr_pdf_page(self, file_path, page_number):
         """
-        Perform OCR on a specific page of the PDF with enhanced debugging.
+        Perform OCR on a specific page of the PDF with enhanced debugging and high DPI setting.
         """
         try:
-            # Convert the specific page of the PDF to an image
-            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1)
+            # Convert the specific page of the PDF to an image with high DPI (300)
+            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1, dpi=300)
             if not images:
                 message = f"No images generated for page {page_number + 1} from PDF."
                 capture_exception(Exception(message))  # Wrap message in Exception
