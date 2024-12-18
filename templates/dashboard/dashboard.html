@@ -24,18 +24,17 @@
           </div>
         </div>
         <div class="card-body">
-          <div class="mt-4">
-            
-            {% if has_active_subscription %}
-            
-            {% else %}
-                <div class="alert alert-warning">
-                    <strong>No Active Subscription:</strong> You currently have no active subscriptions.
-                    <p class="mt-2">To access our services, please subscribe to a plan that fits your needs.</p>
-                    <a type="button" class="btn btn-secondary my-4" href="{% url 'subscriptions:subscription_options_list' %}" class="text-light">View Subscription Plans</a>
-                </div>
-            {% endif %}
-          </div>
+          {% if has_active_subscription %}
+          
+          {% else %}
+            <div class="mt-4">
+              <div class="alert alert-warning">
+                  <strong>No Active Subscription:</strong> You currently have no active subscriptions.
+                  <p class="mt-2">To access our services, please subscribe to a plan that fits your needs.</p>
+                  <a type="button" class="btn btn-secondary my-4" href="{% url 'subscriptions:subscription_options_list' %}" class="text-light">View Subscription Plans</a>
+              </div>
+            </div>
+          {% endif %}
 
           {% if has_active_subscription %}
           <div class="row">
