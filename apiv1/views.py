@@ -34,7 +34,7 @@ from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 class APIUsagePagination(PageNumberPagination):
-    page_size = 10 
+    page_size = 10  # You can adjust this as needed
     page_size_query_param = 'page_size'
     max_page_size = 30
 
@@ -46,10 +46,11 @@ class UserAPIUsageLogsView(APIView):
         try:
             user = request.user  # Get the authenticated user
 
-            # Paginate API Usage Logs
+            # Filter API Usage Logs by user and order by timestamp
+            api_usage_logs = APIUsage.objects.filter(user=user).order_by('-timestamp')
+
+            # Paginate the API Usage Logs
             paginator = APIUsagePagination()
-            api_usage_logs = APIUsage.objects.filter(user=user).order_by('-timestamp')  # Filter by user and order by timestamp
-            # Apply pagination to the queryset
             paginated_logs = paginator.paginate_queryset(api_usage_logs, request)
 
             # Serialize the logs and include associated ProcessLogs
@@ -69,20 +70,21 @@ class UserAPIUsageLogsView(APIView):
         """
         result = []
         for log in logs:
+            # Fetch associated ProcessLogs for each APIUsage
             process_logs = ProcessLog.objects.filter(api_usage=log)
             process_logs_data = [
                 {
-                    "step_name": log.step_name,
-                    "start_time": log.start_time,
-                    "end_time": log.end_time,
-                    "duration_seconds": log.duration_seconds,
-                    "status": log.status,
-                    "error_message": log.error_message,
+                    "step_name": process_log.step_name,
+                    "start_time": process_log.start_time,
+                    "end_time": process_log.end_time,
+                    "duration_seconds": process_log.duration_seconds,
+                    "status": process_log.status,
+                    "error_message": process_log.error_message,
                 }
-                for log in process_logs
+                for process_log in process_logs
             ]
 
-            # Add APIUsage data and associated ProcessLogs to the result
+            # Add APIUsage data along with associated ProcessLogs to the result
             result.append({
                 "user": log.user.username,
                 "status": log.status,
