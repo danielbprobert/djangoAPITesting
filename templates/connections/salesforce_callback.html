@@ -61,24 +61,33 @@
                 body: JSON.stringify({ access_token: accessToken, instance_url: instanceUrl })
             })
             .then(response => {
+                // Debugging step: Log the response
+                console.log("Response status:", response.status);
+                console.log("Response headers:", response.headers);
+
+                // Check if the response status is OK (2xx)
                 if (response.ok) {
-                    window.location = '/connections/';  // Redirect after successful save
+                    return response.json(); // Parse JSON if response is OK
                 } else {
-                    return response.json();  // To read the error message from the response
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Unexpected error');
+                    });
                 }
             })
             .then(data => {
-                if (data.error) {
-                    alert('Failed to add Salesforce connection: ' + data.error);
-                }
+                console.log("Server response data:", data);
+                // Redirect after successful save
+                window.location = '/connections/';
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while saving the Salesforce connection.');
+                // Log detailed error information
+                console.error("Fetch error details:", error);
+                alert('An error occurred while saving the Salesforce connection: ' + error.message);
             });
         } else {
             alert('Missing Salesforce tokens.');
         }
     };
 </script>
+
 {% endblock javascripts %}
