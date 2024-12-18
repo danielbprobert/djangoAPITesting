@@ -135,8 +135,8 @@
                       {% for call in last_20_api_calls %}
                       <tr>
                         <td scope="">
-                          <a href="{% url 'transaction_details' transaction_id=call.id %}">
-                            {{ call.id }}
+                          <a href="{% url 'transaction_details' transaction_id=call.transaction_id %}">
+                            {{ call.transaction_id }}
                           </a>
                         </td>
                         <td scope="">
