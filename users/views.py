@@ -403,8 +403,8 @@ def dashboard(request):
         # Current month API calls
         api_calls_this_month = APIUsage.objects.filter(user=request.user, timestamp__gte=first_day_of_this_month)
         api_calls_this_month_count = api_calls_this_month.count()
-        api_calls_this_month_success = api_calls_this_month.filter(status='Success').count()
-        api_calls_this_month_error = api_calls_this_month.filter(status='Failure').count()
+        api_calls_this_month_success = api_calls_this_month.filter(process_status='Success').count()
+        api_calls_this_month_error = api_calls_this_month.filter(process_status='Failure').count()
 
         # Last month's API calls
         api_calls_last_month = APIUsage.objects.filter(
@@ -413,8 +413,8 @@ def dashboard(request):
             timestamp__lte=last_day_of_last_month
         )
         last_month_calls_count = api_calls_last_month.count()
-        last_month_calls_success = api_calls_last_month.filter(status='Success').count()
-        last_month_calls_error = api_calls_last_month.filter(status='Failure').count()
+        last_month_calls_success = api_calls_last_month.filter(process_status='Success').count()
+        last_month_calls_error = api_calls_last_month.filter(process_status='Failure').count()
 
         # Calculate percentage changes
         percentage_change = (api_calls_this_month_count - last_month_calls_count) / last_month_calls_count * 100 if last_month_calls_count > 0 else 0
