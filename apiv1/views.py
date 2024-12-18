@@ -1,6 +1,5 @@
-import os
 from django.conf import settings
-from django.utils import timezone
+import os
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,6 +8,9 @@ from docx import Document
 from openpyxl import load_workbook
 from pptx import Presentation
 import csv
+from pdf2image import convert_from_path  # For OCR
+import pytesseract  # For OCR
+from PIL import Image
 from simple_salesforce import Salesforce
 import requests
 from rest_framework.permissions import IsAuthenticated
@@ -17,6 +19,7 @@ from .authentication import CustomTokenAuthentication
 from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
 from datetime import datetime
 from contextlib import contextmanager
+from django.utils import timezone
 import uuid
 
 class DocumentProcessingView(APIView):
@@ -80,7 +83,7 @@ class DocumentProcessingView(APIView):
             return Response({"error": str(e), "transactionId": transaction_id}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         finally:
-            # Ensure the file is deleted from the server
+            # Log and remove the file in a process step
             if file_path and os.path.exists(file_path):
                 with self.process_step(api_usage, 'Delete Temporary File'):
                     os.remove(file_path)
@@ -133,16 +136,42 @@ class DocumentProcessingView(APIView):
         return parsed_text, num_pages, num_characters
 
     def extract_text_from_pdf(self, file_path):
+        """
+        Extract text from PDF using PyPDF2 and fallback to OCR if necessary.
+        """
         reader = PdfReader(file_path)
         text = ""
         num_pages = len(reader.pages)
 
-        for page in reader.pages:
+        for page_number, page in enumerate(reader.pages):
             extracted_text = page.extract_text()
-            text += extracted_text if extracted_text else ""
+
+            if extracted_text and extracted_text.strip():
+                # If text is extracted successfully, use it
+                text += extracted_text
+            else:
+                # Fall back to OCR for image-based PDFs
+                text += self.ocr_pdf_page(file_path, page_number)
 
         num_characters = len(text)
         return text, num_pages, num_characters
+
+    def ocr_pdf_page(self, file_path, page_number):
+        """
+        Perform OCR on a specific page of the PDF.
+        """
+        # Convert the specific page of the PDF to an image
+        images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1)
+
+        if not images:
+            return ""  # If the page couldn't be converted to an image
+
+        ocr_text = ""
+        for image in images:
+            # Perform OCR on the image
+            ocr_text += pytesseract.image_to_string(image)
+
+        return ocr_text
 
     def extract_text_from_docx(self, file_path):
         document = Document(file_path)
