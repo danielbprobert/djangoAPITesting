@@ -89,7 +89,7 @@ def salesforce_login(request):
     custom_instance_url = request.POST.get('custom_instance_url')  # Custom instance URL if provided
 
     # Determine the final instance URL
-    if org_type == 'custom' and custom_instance_url:
+    if instance_url == 'https://custom.my.salesforce.com' and custom_instance_url:
         instance_url = custom_instance_url
 
     if not connection_name:
