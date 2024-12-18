@@ -32,79 +32,87 @@
             <div class="row">
                 <div class="pl-lg-4">
                     <div class="row">
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label">Transaction Id</label>
-                            <input type="text" disabled class="form-control" value="{{ transaction.transaction_id }}">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Transaction Id</label>
+                                <input type="text" disabled class="form-control" value="{{ transaction.transaction_id }}">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label class="form-control-label" for="input-username">Status</label>
+                                <input type="text" disabled class="form-control" value="{{ transaction.process_status }}">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label class="form-control-label" for="input-email">Document Id</label>
+                                <input type="text" disabled class="form-control" value="{{ transaction.sf_document_id }}">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Start time</label>
+                                <input type="text" disabled class="form-control" value="{{ transaction.process_start_time }}">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label class="form-control-label" for="input-username">End time</label>
+                                <input type="text" disabled class="form-control" value="{{ transaction.process_end_time }}">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label class="form-control-label" for="input-email">Duration (Seconds)</label>
+                                <input type="text" disabled class="form-control" value="{{ transaction.process_duration }}">
+                            </div>
                         </div>
                     </div>
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label" for="input-username">Status</label>
-                            <input type="text" disabled class="form-control" value="{{ transaction.process_status }}">
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header border-0">
+                            <h3 class="mb-0">Process Logs</h3>
                         </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label" for="input-email">Document Id</label>
-                            <input type="text" disabled class="form-control" value="{{ transaction.sf_document_id }}">
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label">Start time</label>
-                            <input type="text" disabled class="form-control" value="{{ transaction.process_start_time }}">
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label" for="input-username">End time</label>
-                            <input type="text" disabled class="form-control" value="{{ transaction.process_end_time }}">
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="form-group">
-                            <label class="form-control-label" for="input-email">Duration (Seconds)</label>
-                            <input type="text" disabled class="form-control" value="{{ transaction.process_duration }}">
+                        <!-- Light table -->
+                        <div class="table-responsive">
+                            <table class="table align-items-center table-flush">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th scope="col">Step Name</th>
+                                        <th scope="col">Start Time</th>
+                                        <th scope="col">End Time</th>
+                                        <th scope="col">Duration (Seconds)</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Error Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="list">
+                                    {% for log in process_logs %}
+                                    <tr>
+                                        <td scope="">{{ log.step_name }}</td>
+                                        <td scope="">{{ log.start_time }}</td>
+                                        <td scope="">{{ log.end_time }}</td>
+                                        <td scope="">{{ log.duration_seconds }}</td>
+                                        <td class="">{{ log.status }}</td>
+                                        <td class="">{{ log.error_message|default:"N/A" }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No logs available.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- New Section for Process Logs -->
-            <div class="mt-4">
-                <h3 class="mb-3">Process Logs</h3>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th scope="col">Step Name</th>
-                            <th scope="col">Start Time</th>
-                            <th scope="col">End Time</th>
-                            <th scope="col">Duration (Seconds)</th>
-                            <th scope="col">Status</th>
-                            <th scope="col">Error Message</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in process_logs %}
-                        <tr>
-                            <td>{{ log.step_name }}</td>
-                            <td>{{ log.start_time }}</td>
-                            <td>{{ log.end_time }}</td>
-                            <td>{{ log.duration_seconds }}</td>
-                            <td>{{ log.status }}</td>
-                            <td>{{ log.error_message|default:"N/A" }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center">No logs available.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <!-- End Process Logs Section -->
-
+            
           </div>
         </div>
       </div>
