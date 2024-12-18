@@ -32,6 +32,8 @@ class DocumentProcessingView(APIView):
         document_id = request.data.get("documentId")
         organisation_id = request.data.get("organisationId")
 
+        transaction_id = str(uuid.uuid4())
+
         if not document_id or not organisation_id:
             self.log_api_usage(request.user, None, document_id, "FAILURE", request)
             return Response(
@@ -39,7 +41,6 @@ class DocumentProcessingView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        transaction_id = str(uuid.uuid4())
         api_usage = self.log_api_usage(request.user, None, document_id, "PROCESSING", request, transaction_id)
         api_usage.process_start_time = timezone.now()
         api_usage.process_status = "PROCESSING"
