@@ -180,20 +180,28 @@ class DocumentProcessingView(APIView):
                     # Ensure the image is in the right format for Tesseract
                     if image.mode != 'RGB':
                         image = image.convert('RGB')
-                    # Perform OCR using pytesseract
-                    ocr_text += pytesseract.image_to_string(image)
+
+                    # Log the image info to ensure it's valid before OCR
+                    image_path = f"/media/ocr_image_page_{page_number + 1}_image_{image_index + 1}.png"
+                    image.save(image_path)  # Save the image to verify it's valid
+                    print(f"Image saved for OCR debugging: {image_path}")
+
+                    # Perform OCR using pytesseract, with optional config
+                    ocr_text += pytesseract.image_to_string(image, config='--psm 6')
+
                 except Exception as inner_e:
                     # Log the error and include page and image details
                     message = f"OCR failed on page {page_number + 1}, image {image_index + 1}: {str(inner_e)}"
                     capture_exception(Exception(message))  # Wrap message in Exception
                     ocr_text += f"[OCR Error: {message}]"
-            
+
             return ocr_text
         except Exception as e:
             # Capture the outer-level error
             message = f"OCR process failed for page {page_number + 1}: {str(e)}"
             capture_exception(Exception(message))  # Wrap message in Exception
             return f"[OCR Process Error: {message}]"
+
 
 
     def extract_text_from_docx(self, file_path):
