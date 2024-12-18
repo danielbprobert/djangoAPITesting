@@ -25,9 +25,9 @@
         </div>
         <div class="card-body">
           <div class="mt-4">
-            <h2>Subscription Status</h2>
+            
             {% if has_active_subscription %}
-                <p>You have an active subscription.</p>
+            
             {% else %}
                 <div class="alert alert-warning">
                     <strong>No Active Subscription:</strong> You currently have no active subscriptions.
@@ -37,7 +37,7 @@
             {% endif %}
           </div>
 
-          {% if has_active_subscription and api_usage_stats %}
+          {% if has_active_subscription %}
           <div class="row">
             <div class="col-xl-4 col-md-6">
               <div class="card card-stats">
