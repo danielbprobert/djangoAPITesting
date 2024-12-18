@@ -120,8 +120,6 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert(data.success);
-          // Remove the row dynamically
           document.querySelector(`button[onclick="disconnectConnection('${currentConnectionId}')"]`).closest('tr').remove();
         } else {
           alert(data.error || 'An error occurred while disconnecting the Salesforce connection.');
@@ -132,7 +130,6 @@
         alert('An unexpected error occurred.');
       })
       .finally(() => {
-        // Reset the connection ID and hide the modal
         currentConnectionId = null;
         $('#confirmationModal').modal('hide'); // Bootstrap 4 modal API
       });
