@@ -95,6 +95,7 @@ class APIUsage(models.Model):
     sf_document_id = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
+    error_message = models.TextField(null=True, blank=True) 
 
     process_start_time = models.DateTimeField(null=True, blank=True)
     process_end_time = models.DateTimeField(null=True, blank=True)

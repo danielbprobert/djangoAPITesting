@@ -35,13 +35,13 @@ class DocumentProcessingView(APIView):
         transaction_id = str(uuid.uuid4())
 
         if not document_id or not organisation_id:
-            self.log_api_usage(request.user, None, document_id, "FAILURE", request, transaction_id)
+            self.log_api_usage(request.user, None, document_id, "FAILURE", request, transaction_id, 'Missing documentId or organisationId')
             return Response(
                 {"error": "Missing documentId or organisationId"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        api_usage = self.log_api_usage(request.user, None, document_id, "PROCESSING", request, transaction_id)
+        api_usage = self.log_api_usage(request.user, None, document_id, "PROCESSING", request, transaction_id, '')
         api_usage.process_start_time = timezone.now()
         api_usage.process_status = "PROCESSING"
         api_usage.save()
@@ -53,6 +53,9 @@ class DocumentProcessingView(APIView):
                     user=request.user,
                     organization_id=organisation_id
                 )
+
+            api_usage.salesforce_connection = connection
+            api_usage.save()
 
             with self.process_step(api_usage, 'Fetch File from Salesforce'):
                 file_path = self.fetch_file_from_salesforce(connection.access_token, document_id, connection.instance_url)
@@ -218,7 +221,7 @@ class DocumentProcessingView(APIView):
                 text += " ".join(row) + "\n"
         return text
 
-    def log_api_usage(self, user, connection, document_id, status, request, transaction_id):
+    def log_api_usage(self, user, connection, document_id, status, request, transaction_id, message):
         try:
             token = self.get_token_from_request(request)
             api_key = APIKey.objects.filter(key=token).first()
@@ -229,7 +232,8 @@ class DocumentProcessingView(APIView):
                 salesforce_connection=connection,
                 sf_document_id=document_id,
                 status=status,
-                transaction_id=transaction_id
+                transaction_id=transaction_id,
+                error_message=message,
             )
             return api_usage
         except Exception as e:
