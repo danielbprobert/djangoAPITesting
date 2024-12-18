@@ -39,27 +39,20 @@ class UserAPIUsageLogsView(APIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            user = request.user  # Get the authenticated user
+            user = request.user
 
-            # Get page_size from query parameters or use default (10)
             page_size = int(request.query_params.get('page_size', 10))
             page_number = int(request.query_params.get('page', 1))
 
-            # Filter API Usage Logs by user and order by timestamp
             api_usage_logs = APIUsage.objects.filter(user=user).order_by('-timestamp')
 
-            # Paginate the API Usage Logs using Django's Paginator
             paginator = Paginator(api_usage_logs, page_size)
             paginated_logs = paginator.get_page(page_number)
 
-            # Serialize the logs and include associated ProcessLogs
             data = self.get_api_usage_logs_serializer(paginated_logs)
 
-            # Return paginated response
             return Response({
-                'count': paginator.count,
-                'next': paginated_logs.has_next(),
-                'previous': paginated_logs.has_previous(),
+                'totalRecordCount': paginator.count,
                 'results': data
             }, status=status.HTTP_200_OK)
 
@@ -69,12 +62,8 @@ class UserAPIUsageLogsView(APIView):
             return Response({"detail": "An error occurred while fetching the logs."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_api_usage_logs_serializer(self, logs):
-        """
-        Serializes the APIUsage records and includes related ProcessLogs
-        """
         result = []
         for log in logs:
-            # Fetch associated ProcessLogs for each APIUsage
             process_logs = ProcessLog.objects.filter(api_usage=log)
             process_logs_data = [
                 {
@@ -88,14 +77,14 @@ class UserAPIUsageLogsView(APIView):
                 for process_log in process_logs
             ]
 
-            # Add APIUsage data along with associated ProcessLogs to the result
             result.append({
                 "user": log.user.username,
-                "status": log.status,
+                "status": log.process_status,
                 "timestamp": log.timestamp,
                 "transaction_id": log.transaction_id,
                 "error_message": log.error_message,
                 "process_duration": log.process_duration,
+                "document_id": log.sf_document_id,
                 "process_logs": process_logs_data,
             })
 
