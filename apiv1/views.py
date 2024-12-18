@@ -22,7 +22,7 @@ from contextlib import contextmanager
 from django.utils import timezone
 import uuid
 
-pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
