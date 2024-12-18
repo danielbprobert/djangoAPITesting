@@ -8,11 +8,11 @@ import csv
 from django.conf import settings
 from sentry_sdk import capture_exception
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from .authentication import CustomTokenAuthentication
 
@@ -33,11 +33,6 @@ from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
 
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
-class APIUsagePagination(PageNumberPagination):
-    page_size = 10  # You can adjust this as needed
-    page_size_query_param = 'page_size'
-    max_page_size = 30
-
 class UserAPIUsageLogsView(APIView):
     authentication_classes = [CustomTokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -46,18 +41,27 @@ class UserAPIUsageLogsView(APIView):
         try:
             user = request.user  # Get the authenticated user
 
+            # Get page_size from query parameters or use default (10)
+            page_size = int(request.query_params.get('page_size', 10))
+            page_number = int(request.query_params.get('page', 1))
+
             # Filter API Usage Logs by user and order by timestamp
             api_usage_logs = APIUsage.objects.filter(user=user).order_by('-timestamp')
 
-            # Paginate the API Usage Logs
-            paginator = APIUsagePagination()
-            paginated_logs = paginator.paginate_queryset(api_usage_logs, request)
+            # Paginate the API Usage Logs using Django's Paginator
+            paginator = Paginator(api_usage_logs, page_size)
+            paginated_logs = paginator.get_page(page_number)
 
             # Serialize the logs and include associated ProcessLogs
             data = self.get_api_usage_logs_serializer(paginated_logs)
 
             # Return paginated response
-            return paginator.get_paginated_response(data)
+            return Response({
+                'count': paginator.count,
+                'next': paginated_logs.has_next(),
+                'previous': paginated_logs.has_previous(),
+                'results': data
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             # Log the exception in Sentry
