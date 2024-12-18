@@ -74,4 +74,53 @@
 
 
 {% block javascripts %}
+<script>
+  function disconnectConnection(connectionId) {
+    // Confirm with the user before proceeding
+    if (!confirm("Are you sure you want to disconnect this Salesforce connection?")) {
+      return;
+    }
+
+    // Make an AJAX request to disconnect the connection
+    fetch(`/salesforce/disconnect/${connectionId}/`, {
+      method: 'DELETE', // Use DELETE method
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'), // Include the CSRF token
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.success);
+          // Optionally, refresh the page or remove the row dynamically
+          document.querySelector(`button[onclick="disconnectConnection('${connectionId}')"]`).closest('tr').remove();
+        } else {
+          alert(data.error || 'An error occurred while disconnecting the Salesforce connection.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An unexpected error occurred.');
+      });
+  }
+
+  // Utility function to get the CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        // Check if this cookie string begins with the name we want
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
 {% endblock javascripts %}
