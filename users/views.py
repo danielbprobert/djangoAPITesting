@@ -387,45 +387,40 @@ def ip_management(request):
 def dashboard(request):
     has_active_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).exists()
     api_usage_stats = None
-    percentage_change = 0
-    api_calls_success_change = 0
-    api_calls_error_change = 0
-    user_subscription_limit = 0
-    recent_api_calls = None 
 
     if has_active_subscription:
+        # Get subscription limit
         user_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).first()
-        if user_subscription and user_subscription.subscription_option:
-            user_subscription_limit = user_subscription.subscription_option.api_limit 
+        user_subscription_limit = user_subscription.subscription_option.api_limit if user_subscription and user_subscription.subscription_option else 0
 
-        now = datetime.now()
+        # Time calculations
+        current_time = now()
+        first_day_of_this_month = current_time.replace(day=1)
+        first_day_of_last_month = (current_time.replace(day=1) - timedelta(days=1)).replace(day=1)
+        last_day_of_last_month = first_day_of_last_month.replace(day=monthrange(first_day_of_last_month.year, first_day_of_last_month.month)[1])
 
-        first_day_of_this_month = now.replace(day=1)
-
-        last_month = now - timedelta(days=30)
-        previous_month_start = last_month - timedelta(days=30)
-
+        # Current month API calls
         api_calls_this_month = APIUsage.objects.filter(user=request.user, timestamp__gte=first_day_of_this_month)
         api_calls_this_month_count = api_calls_this_month.count()
-
         api_calls_this_month_success = api_calls_this_month.filter(status='SUCCESS').count()
         api_calls_this_month_error = api_calls_this_month.filter(status='FAILURE').count()
 
-        last_month_calls = APIUsage.objects.filter(user=request.user, timestamp__gte=last_month)
-        last_month_calls_count = last_month_calls.count()
+        # Last month's API calls
+        api_calls_last_month = APIUsage.objects.filter(
+            user=request.user,
+            timestamp__gte=first_day_of_last_month,
+            timestamp__lte=last_day_of_last_month
+        )
+        last_month_calls_count = api_calls_last_month.count()
+        last_month_calls_success = api_calls_last_month.filter(status='SUCCESS').count()
+        last_month_calls_error = api_calls_last_month.filter(status='FAILURE').count()
 
-        last_month_calls_success = last_month_calls.filter(status='SUCCESS').count()
-        last_month_calls_error = last_month_calls.filter(status='FAILURE').count()
+        # Calculate percentage changes
+        percentage_change = (api_calls_this_month_count - last_month_calls_count) / last_month_calls_count * 100 if last_month_calls_count > 0 else 0
+        api_calls_success_change = (api_calls_this_month_success - last_month_calls_success) / last_month_calls_success * 100 if last_month_calls_success > 0 else 0
+        api_calls_error_change = (api_calls_this_month_error - last_month_calls_error) / last_month_calls_error * 100 if last_month_calls_error > 0 else 0
 
-        if last_month_calls_count > 0:
-            percentage_change = ((api_calls_this_month_count - last_month_calls_count) / last_month_calls_count) * 100
-        if last_month_calls_success > 0:
-            api_calls_success_change = ((api_calls_this_month_success - last_month_calls_success) / last_month_calls_success) * 100
-        if last_month_calls_error > 0:
-            api_calls_error_change = ((api_calls_this_month_error - last_month_calls_error) / last_month_calls_error) * 100
-
-        recent_api_calls = APIUsage.objects.filter(user=request.user).order_by('-timestamp')[:30]
-
+        # Prepare stats
         api_usage_stats = {
             'api_calls_this_month': api_calls_this_month_count,
             'api_calls_this_month_change_from_last_month': round(percentage_change, 2),
@@ -433,14 +428,13 @@ def dashboard(request):
             'api_calls_this_month_success_change_from_last_month': round(api_calls_success_change, 2),
             'api_calls_this_month_error': api_calls_this_month_error,
             'api_calls_this_month_error_change_from_last_month': round(api_calls_error_change, 2),
-            'subscription_limit': user_subscription_limit
+            'subscription_limit': user_subscription_limit,
         }
 
     return render(request, 'dashboard/dashboard.html', {
         'segment': 'dashboard',
         'has_active_subscription': has_active_subscription,
         'api_usage_stats': api_usage_stats,
-        'recent_api_calls': recent_api_calls 
     })
 
 
