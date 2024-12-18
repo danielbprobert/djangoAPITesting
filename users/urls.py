@@ -30,7 +30,7 @@ urlpatterns = [
     path('api-keys/<int:key_id>/update/', views.update_api_key, name='update_api_key'),
     path('api-keys/<int:key_id>/delete/', views.delete_api_key, name='delete_api_key'),
 
-    path('transaction/<int:transaction_id>/', views.transaction_details, name='transaction_details'),
+    path('transaction/<uuid:transaction_id>/', transaction_details, name='transaction_details'),
     
     path('connections/', views.connections, name='connections'),
     path('add-connection/', views.add_connection, name='add_connection'),
