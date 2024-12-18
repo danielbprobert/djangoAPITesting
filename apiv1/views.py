@@ -21,6 +21,7 @@ from datetime import datetime
 from contextlib import contextmanager
 from django.utils import timezone
 import uuid
+import traceback
 
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
@@ -162,6 +163,7 @@ class DocumentProcessingView(APIView):
         num_characters = len(text)
         return text, num_pages, num_characters
 
+
     def ocr_pdf_page(self, file_path, page_number):
         """
         Perform OCR on a specific page of the PDF with enhanced debugging and high DPI setting.
@@ -181,26 +183,37 @@ class DocumentProcessingView(APIView):
                     if image.mode != 'RGB':
                         image = image.convert('RGB')
 
-                    # Log the image info to ensure it's valid before OCR
+                    # Save image for debugging
                     image_path = os.path.join(settings.MEDIA_ROOT, f"ocr_image_page_{page_number + 1}_image_{image_index + 1}.png")
                     image.save(image_path)
                     print(f"Image saved for OCR debugging: {image_path}")
 
                     # Perform OCR using pytesseract, with optional config
-                    ocr_text += pytesseract.image_to_string(image, config='--psm 6')
+                    try:
+                        ocr_text += pytesseract.image_to_string(image, config='--psm 6')
+                        print(f"OCR success on page {page_number + 1}, image {image_index + 1}")
+                    except Exception as e:
+                        # Log the specific error with stack trace for better debugging
+                        message = f"OCR failed on page {page_number + 1}, image {image_index + 1}: {str(e)}"
+                        capture_exception(Exception(message))  # Capture the exception with Sentry
+                        print(f"Error during OCR: {traceback.format_exc()}")
+                        ocr_text += f"[OCR Error: {message}]\n"
 
                 except Exception as inner_e:
                     # Log the error and include page and image details
-                    message = f"OCR failed on page {page_number + 1}, image {image_index + 1}: {str(inner_e)}"
-                    capture_exception(Exception(message))  # Wrap message in Exception
-                    ocr_text += f"[OCR Error: {message}]"
+                    message = f"Image handling failed on page {page_number + 1}, image {image_index + 1}: {str(inner_e)}"
+                    capture_exception(Exception(message))  # Capture error with Sentry
+                    print(f"Error during image handling: {traceback.format_exc()}")
+                    ocr_text += f"[Image Handling Error: {message}]\n"
 
             return ocr_text
         except Exception as e:
             # Capture the outer-level error
             message = f"OCR process failed for page {page_number + 1}: {str(e)}"
-            capture_exception(Exception(message))  # Wrap message in Exception
+            capture_exception(Exception(message))  # Capture error with Sentry
+            print(f"Error during OCR processing: {traceback.format_exc()}")
             return f"[OCR Process Error: {message}]"
+
 
 
 
