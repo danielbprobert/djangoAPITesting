@@ -11,9 +11,7 @@
   <div class="container-fluid d-flex align-items-center">
     <div class="row">
       <div class="col-lg-12 col-md-12">
-        <h1 class="display-2 text-white"> 
-          
-        </h1>
+        <h1 class="display-2 text-white"></h1>
       </div>
     </div>
   </div>
@@ -72,6 +70,41 @@
                     </div>
                 </div>
             </div>
+
+            <!-- New Section for Process Logs -->
+            <div class="mt-4">
+                <h3 class="mb-3">Process Logs</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Step Name</th>
+                            <th scope="col">Start Time</th>
+                            <th scope="col">End Time</th>
+                            <th scope="col">Duration (Seconds)</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Error Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in process_logs %}
+                        <tr>
+                            <td>{{ log.step_name }}</td>
+                            <td>{{ log.start_time }}</td>
+                            <td>{{ log.end_time }}</td>
+                            <td>{{ log.duration_seconds }}</td>
+                            <td>{{ log.status }}</td>
+                            <td>{{ log.error_message|default:"N/A" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No logs available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- End Process Logs Section -->
+
           </div>
         </div>
       </div>
