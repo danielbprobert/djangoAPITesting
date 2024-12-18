@@ -12,6 +12,7 @@ from .authentication import CustomTokenAuthentication
 from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog  # Assuming ProcessLog is in users.models
 from datetime import datetime
 from contextlib import contextmanager
+from django.utils import timezone  # For timezone-aware datetime
 import uuid
 
 class DocumentProcessingView(APIView):
@@ -32,7 +33,7 @@ class DocumentProcessingView(APIView):
         # Create the APIUsage entry with a unique transaction_id
         transaction_id = str(uuid.uuid4())
         api_usage = self.log_api_usage(request.user, None, document_id, "PROCESSING", request, transaction_id)
-        api_usage.process_start_time = datetime.now()
+        api_usage.process_start_time = timezone.now()
         api_usage.process_status = "PROCESSING"
         api_usage.save()
 
@@ -62,7 +63,7 @@ class DocumentProcessingView(APIView):
             }
 
             # Update APIUsage entry on success
-            api_usage.process_end_time = datetime.now()
+            api_usage.process_end_time = timezone.now()
             api_usage.process_status = "SUCCESS"
             api_usage.calculate_process_duration()
             api_usage.save()
@@ -73,7 +74,7 @@ class DocumentProcessingView(APIView):
             # Handle exception, update status and capture error
             capture_exception(e)
 
-            api_usage.process_end_time = datetime.now()
+            api_usage.process_end_time = timezone.now()
             api_usage.process_status = "FAILURE"
             api_usage.calculate_process_duration()
             api_usage.save()
@@ -177,17 +178,17 @@ class DocumentProcessingView(APIView):
         process_log = ProcessLog.objects.create(
             api_usage=api_usage,
             step_name=step_name,
-            start_time=datetime.now(),
+            start_time=timezone.now(),
             status='PROCESSING'
         )
         try:
             yield
-            process_log.end_time = datetime.now()
+            process_log.end_time = timezone.now()
             process_log.status = 'SUCCESS'
             process_log.calculate_duration()
             process_log.save()
         except Exception as e:
-            process_log.end_time = datetime.now()
+            process_log.end_time = timezone.now()
             process_log.status = 'FAILURE'
             process_log.error_message = str(e)
             process_log.calculate_duration()
