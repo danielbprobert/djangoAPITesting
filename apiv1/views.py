@@ -60,9 +60,6 @@ class UserAPIUsageByTransactionView(APIView):
             return Response({"detail": "An error occurred while fetching the logs."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_api_usage_serializer(self, api_usage, process_logs):
-        """
-        Serializes the APIUsage record and includes related ProcessLogs
-        """
         process_logs_data = [
             {
                 "step_name": process_log.step_name,
@@ -76,7 +73,6 @@ class UserAPIUsageByTransactionView(APIView):
         ]
 
         return {
-            "user": api_usage.user.username,
             "status": api_usage.process_status,
             "timestamp": api_usage.timestamp,
             "transaction_id": api_usage.transaction_id,
@@ -131,7 +127,6 @@ class UserAPIUsageLogsView(APIView):
             ]
 
             result.append({
-                "user": log.user.username,
                 "status": log.process_status,
                 "timestamp": log.timestamp,
                 "transaction_id": log.transaction_id,
