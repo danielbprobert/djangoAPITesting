@@ -15,6 +15,7 @@ from simple_salesforce import Salesforce
 import requests
 from rest_framework.permissions import IsAuthenticated
 from sentry_sdk import capture_exception
+from rest_framework.pagination import PageNumberPagination
 from .authentication import CustomTokenAuthentication
 from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
 from datetime import datetime
@@ -24,6 +25,62 @@ import uuid
 import shutil
 
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+
+class APIUsagePagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class UserAPIUsageLogsView(APIView):
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            user = request.user
+            paginator = APIUsagePagination()
+            api_usage_logs = APIUsage.objects.filter(user=user).order_by('-timestamp')  # Filter by user and order by timestamp
+            paginated_logs = paginator.paginate_queryset(api_usage_logs, request)
+
+            data = self.get_api_usage_logs_serializer(paginated_logs)
+
+            return paginator.get_paginated_response(data)
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response({"detail": "An error occurred while fetching the logs."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get_api_usage_logs_serializer(self, logs):
+        """
+        Serializes the APIUsage records and includes related ProcessLogs
+        """
+        result = []
+        for log in logs:
+            process_logs = ProcessLog.objects.filter(api_usage=log)
+            process_logs_data = [
+                {
+                    "step_name": log.step_name,
+                    "start_time": log.start_time,
+                    "end_time": log.end_time,
+                    "duration_seconds": log.duration_seconds,
+                    "status": log.status,
+                    "error_message": log.error_message,
+                }
+                for log in process_logs
+            ]
+
+            # Add APIUsage data and associated ProcessLogs to the result
+            result.append({
+                "user": log.user.username,
+                "status": log.status,
+                "timestamp": log.timestamp,
+                "transaction_id": log.transaction_id,
+                "error_message": log.error_message,
+                "process_duration": log.process_duration,
+                "process_logs": process_logs_data,
+            })
+
+        return result
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
