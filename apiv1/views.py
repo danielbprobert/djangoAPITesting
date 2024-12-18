@@ -29,9 +29,17 @@ from contextlib import contextmanager
 from simple_salesforce import Salesforce
 
 from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
-
+from .permissions import IsSuperUser
 
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+
+
+class SuperUserOnlyView(APIView):
+    permission_classes = [IsSuperUser]  # Apply the custom superuser permission
+
+    def get(self, request, *args, **kwargs):
+        data = {"message": "This is a superuser-only API"}
+        return Response(data, status=status.HTTP_200_OK)
 
 class UserAPIUsageByTransactionView(APIView):
     authentication_classes = [CustomTokenAuthentication]
