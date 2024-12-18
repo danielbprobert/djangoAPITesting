@@ -20,6 +20,7 @@ import csv
 from decouple import config
 import requests
 from sentry_sdk import capture_message, capture_exception
+from calendar import monthrange
 
 
 SALESFORCE_CLIENT_ID = config('SALESFORCE_CLIENT_ID', default='your-default-secret-key')
