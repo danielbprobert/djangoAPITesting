@@ -65,6 +65,24 @@
         </div>
       </div>
     </div>
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmationModalLabel">Confirm Disconnection</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to disconnect this Salesforce connection?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" id="confirmDisconnectBtn" class="btn btn-danger">Disconnect</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
   {% include "includes/footer.html" %}
 
@@ -73,17 +91,28 @@
 {% endblock content %}
 
 
-{% block javascripts %}
 <script>
+  let currentConnectionId = null;
+
   function disconnectConnection(connectionId) {
-    // Confirm with the user before proceeding
-    if (!confirm("Are you sure you want to disconnect this Salesforce connection?")) {
+    // Store the connection ID for use after confirmation
+    currentConnectionId = connectionId;
+
+    // Show the modal
+    const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    confirmationModal.show();
+  }
+
+  // Event listener for the confirm button
+  document.getElementById('confirmDisconnectBtn').addEventListener('click', function () {
+    if (!currentConnectionId) {
+      alert('No connection selected for disconnection.');
       return;
     }
 
-    // Make an AJAX request to disconnect the connection
-    fetch(`/salesforce/disconnect/${connectionId}/`, {
-      method: 'DELETE', // Use DELETE method
+    // Make the AJAX request to disconnect the connection
+    fetch(`/salesforce/disconnect/${currentConnectionId}/`, {
+      method: 'DELETE',
       headers: {
         'X-CSRFToken': getCookie('csrftoken'), // Include the CSRF token
         'Content-Type': 'application/json',
@@ -93,8 +122,8 @@
       .then(data => {
         if (data.success) {
           alert(data.success);
-          // Optionally, refresh the page or remove the row dynamically
-          document.querySelector(`button[onclick="disconnectConnection('${connectionId}')"]`).closest('tr').remove();
+          // Remove the row dynamically
+          document.querySelector(`button[onclick="disconnectConnection('${currentConnectionId}')"]`).closest('tr').remove();
         } else {
           alert(data.error || 'An error occurred while disconnecting the Salesforce connection.');
         }
@@ -102,8 +131,14 @@
       .catch(error => {
         console.error('Error:', error);
         alert('An unexpected error occurred.');
+      })
+      .finally(() => {
+        // Reset the connection ID and hide the modal
+        currentConnectionId = null;
+        const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+        confirmationModal.hide();
       });
-  }
+  });
 
   // Utility function to get the CSRF token
   function getCookie(name) {
@@ -112,7 +147,6 @@
       const cookies = document.cookie.split(';');
       for (let i = 0; i < cookies.length; i++) {
         const cookie = cookies[i].trim();
-        // Check if this cookie string begins with the name we want
         if (cookie.startsWith(name + '=')) {
           cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
           break;
@@ -122,5 +156,6 @@
     return cookieValue;
   }
 </script>
+
 
 {% endblock javascripts %}
