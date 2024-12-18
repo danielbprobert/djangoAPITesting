@@ -8,8 +8,8 @@ from docx import Document
 from openpyxl import load_workbook
 from pptx import Presentation
 import csv
-from pdf2image import convert_from_path  # For OCR
-import pytesseract  # For OCR
+from pdf2image import convert_from_path
+import pytesseract  
 from PIL import Image
 from simple_salesforce import Salesforce
 import requests
@@ -21,6 +21,8 @@ from datetime import datetime
 from contextlib import contextmanager
 from django.utils import timezone
 import uuid
+
+pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"
 
 class DocumentProcessingView(APIView):
     authentication_classes = [CustomTokenAuthentication]
