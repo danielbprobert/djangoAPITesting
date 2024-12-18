@@ -113,27 +113,43 @@
               </div>
             </div>
           </div>
-          <h3>Last 20 API Calls</h3>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Timestamp</th>
-                      <th>Status</th>
-                      <th>Details</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  {% for call in last_20_api_calls %}
-                  <tr>
-                      <td>{{ call.timestamp }}</td>
-                      <td>{{ call.process_status }}</td>
-                      <td>{{ call.details }}</td>
-                  </tr>
-                  {% endfor %}
-              </tbody>
-          </table>
-          {% endif %}
-
+          <div class="row">
+            <div class="col">
+              <div class="card">
+                <!-- Card header -->
+                <div class="card-header border-0">
+                  <h3 class="mb-0">Last 20 API Calls</h3>
+                </div>
+                <!-- Light table -->
+                <div class="table-responsive">
+                  <table class="table align-items-center table-flush">
+                    <thead class="thead-light">
+                      <tr>
+                        <th scope="col">Timestamp</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">DocumentId</th>
+                      </tr>
+                    </thead>
+                    <tbody class="list">
+                      {% for call in last_20_api_calls %}
+                      <tr>
+                        <th scope="row">
+                          {{ call.timestamp }}
+                        </th>
+                        <td class="budget">
+                          {{ call.process_status }}
+                        </td>
+                        <td>
+                          {{ call.sf_document_id }}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
