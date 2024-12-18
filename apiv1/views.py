@@ -82,7 +82,8 @@ class DocumentProcessingView(APIView):
         finally:
             # Ensure the file is deleted from the server
             if file_path and os.path.exists(file_path):
-                os.remove(file_path)
+                with self.process_step(api_usage, 'Delete Temporary File'):
+                    os.remove(file_path)
 
     def fetch_file_from_salesforce(self, access_token, document_id, instance_url):
         sf = Salesforce(instance_url=instance_url, session_id=access_token)
