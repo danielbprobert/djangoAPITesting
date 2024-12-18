@@ -35,7 +35,8 @@ pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 
 class SuperUserOnlyView(APIView):
-    permission_classes = [IsSuperUser]  # Apply the custom superuser permission
+    authentication_classes = [CustomTokenAuthentication]
+    permission_classes = [IsSuperUser]
 
     def get(self, request, *args, **kwargs):
         data = {"message": "This is a superuser-only API"}
