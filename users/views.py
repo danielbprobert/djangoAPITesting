@@ -1,3 +1,10 @@
+import base64
+import qrcode
+import secrets
+import json
+import requests
+import csv
+from sentry_sdk import capture_message, capture_exception
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -8,24 +15,14 @@ from subscriptions.models import UserSubscription
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.urls import reverse
-import base64
-import qrcode
-import secrets
-import json
-from .models import CustomUser, SalesforceConnection, APIKey, LoginHistory, APIUsage, TrustedIP
+from django.conf import settings
 from io import BytesIO
 from django.utils.timezone import now
 from datetime import datetime, timedelta
-import csv
 from decouple import config
-import requests
-from sentry_sdk import capture_message, capture_exception
 from calendar import monthrange
+from .models import CustomUser, SalesforceConnection, APIKey, LoginHistory, APIUsage, TrustedIP
 
-
-SALESFORCE_CLIENT_ID = config('SALESFORCE_CLIENT_ID', default='your-default-secret-key')
-SALESFORCE_CLIENT_SECRET = config('SALESFORCE_SECRET', default='your-default-secret-key')
-SALESFORCE_CALLBACK_URL = config('SALESFORCE_CALLBACK_URL', default='https://127.0.0.1:8000/users/salesforce/callback/')
 
 @login_required
 def disconnect_salesforce_connection(request, connection_id):
@@ -37,9 +34,6 @@ def disconnect_salesforce_connection(request, connection_id):
         return JsonResponse({'error': 'Connection not found'}, status=404)
     
 def get_salesforce_organization_id(access_token, instance_url):
-    """
-    Fetch the Salesforce user's organization ID using the access token.
-    """
     user_info_url = f"{instance_url}/services/oauth2/userinfo"
     headers = {
         'Authorization': f'Bearer {access_token}'
@@ -65,20 +59,18 @@ def save_salesforce_tokens(request):
         if not access_token or not instance_url or not connection_name:
             return JsonResponse({'error': 'Missing required data'}, status=400)
         
-        # Fetch the organization ID
         organization_id = get_salesforce_organization_id(access_token, instance_url)
         
         if not organization_id:
             return JsonResponse({'error': 'Failed to fetch Salesforce organization ID'}, status=400)
         
-        # Create the SalesforceConnection object
         SalesforceConnection.objects.create(
             user=request.user,
             connection_name=connection_name,
             access_token=access_token,
             instance_url=instance_url,
             authenticated=True,
-            organization_id=organization_id  # Store the organization ID
+            organization_id=organization_id 
         )
         
         return JsonResponse({'success': 'Salesforce connection added successfully'})
@@ -87,10 +79,9 @@ def save_salesforce_tokens(request):
 def salesforce_login(request):
     connection_name = request.POST.get('connection_name')
     org_type = request.POST.get('org_type')
-    instance_url = request.POST.get('instance_url')  # Standard instance URL
-    custom_instance_url = request.POST.get('custom_instance_url')  # Custom instance URL if provided
+    instance_url = request.POST.get('instance_url') 
+    custom_instance_url = request.POST.get('custom_instance_url') 
 
-    # Determine the final instance URL
     if instance_url == 'https://custom.my.salesforce.com' and custom_instance_url:
         instance_url = custom_instance_url
 
@@ -100,29 +91,25 @@ def salesforce_login(request):
     if not instance_url:
         return JsonResponse({'error': 'Instance URL is required'}, status=400)
 
-    # Store the connection details in the SalesforceConnection model
     salesforce_connection = SalesforceConnection.objects.create(
         user=request.user,
         connection_name=connection_name,
         org_type=org_type,
         instance_url=instance_url,
-        authenticated=False  # Will update this later when we get the access token
+        authenticated=False 
     )
 
-    # Store the connection ID in the session to associate it with the current user session
     request.session['salesforce_connection_id'] = salesforce_connection.id
 
-    # Construct the Salesforce Auth URL using the final instance URL
     salesforce_auth_url = (
         f"{instance_url}/services/oauth2/authorize?"
-        f"response_type=token&client_id={SALESFORCE_CLIENT_ID}&redirect_uri={SALESFORCE_CALLBACK_URL}"
+        f"response_type=token&client_id={settings.SALESFORCE_CLIENT_ID}&redirect_uri={settings.SALESFORCE_CALLBACK_URL}"
     )
 
     return redirect(salesforce_auth_url)
 
 @login_required
 def salesforce_callback(request):
-    # Render the callback page to allow JavaScript to process the fragment
     return render(request, 'connections/salesforce_callback.html')
 
 @login_required
