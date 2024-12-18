@@ -388,6 +388,7 @@ def ip_management(request):
 def dashboard(request):
     has_active_subscription = UserSubscription.objects.filter(user=request.user, is_active=True).exists()
     api_usage_stats = None
+    last_20_api_calls = []
 
     if has_active_subscription:
         # Get subscription limit
@@ -432,10 +433,14 @@ def dashboard(request):
             'subscription_limit': user_subscription_limit,
         }
 
+        # Fetch the last 20 API calls
+        last_20_api_calls = APIUsage.objects.filter(user=request.user).order_by('-timestamp')[:20]
+
     return render(request, 'dashboard/dashboard.html', {
         'segment': 'dashboard',
         'has_active_subscription': has_active_subscription,
         'api_usage_stats': api_usage_stats,
+        'last_20_api_calls': last_20_api_calls,
     })
 
 
