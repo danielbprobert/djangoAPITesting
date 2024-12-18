@@ -52,8 +52,8 @@ class UserAPIUsageLogsView(APIView):
             data = self.get_api_usage_logs_serializer(paginated_logs)
 
             return Response({
-                'totalRecordCount': paginator.count,
-                'results': data
+                'total_record_count': paginator.count,
+                'api_logs': data
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -85,7 +85,7 @@ class UserAPIUsageLogsView(APIView):
                 "error_message": log.error_message,
                 "process_duration": log.process_duration,
                 "document_id": log.sf_document_id,
-                "process_logs": process_logs_data,
+                "process_step_logs": process_logs_data,
             })
 
         return result
