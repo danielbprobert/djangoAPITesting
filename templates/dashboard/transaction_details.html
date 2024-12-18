@@ -26,18 +26,40 @@
         <div class="card-header">
           <div class="row align-items-center">
             <div class="col-8">
-              <h3 class="mb-0">Dashboard | Transaction Details</h3>
+              <h3 class="mb-0">Transaction Details</h3>
             </div>
           </div>
         </div>
         <div class="card-body">
-          <div class="row">
-            <h2>Transaction Details</h2>
-            <p><strong>Transaction Id:</strong> {{ transaction.id }}</p>
-            <p><strong>Timestamp:</strong> {{ transaction.timestamp }}</p>
-            <p><strong>Status:</strong> {{ transaction.process_status }}</p>
-            <p><strong>Document Id:</strong> {{ transaction.sf_document_id }}</p>
-            <p><strong>Details:</strong> {{ transaction.details }}</p>
+            <div class="row">
+                <div class="pl-lg-4">
+                    <div class="row">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-control-label" for="input-firstname">Transaction Id</label>
+                            {{ transaction.id }}
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-control-label" for="input-lastname">Timestamp</label>
+                            {{ transaction.timestamp }}
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-control-label" for="input-username">Status</label>
+                            {{ transaction.process_status }}
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-control-label" for="input-email">Document Id</label>
+                            {{ transaction.sf_document_id }}
+                        </div>
+                    </div>
+                </div>
+            </div>
           </div>
         </div>
       </div>
