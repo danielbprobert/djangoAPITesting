@@ -1,35 +1,42 @@
-from django.conf import settings
 import os
+import requests
+import uuid
+import shutil
+import pytesseract  
+import csv
+
+from django.conf import settings
+from sentry_sdk import capture_exception
+from django.utils import timezone
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from .authentication import CustomTokenAuthentication
+
 from PyPDF2 import PdfReader
+from pdf2image import convert_from_path
 from docx import Document
 from openpyxl import load_workbook
 from pptx import Presentation
-import csv
-from pdf2image import convert_from_path
-import pytesseract  
 from PIL import Image
-from simple_salesforce import Salesforce
-import requests
-from rest_framework.permissions import IsAuthenticated
-from sentry_sdk import capture_exception
-from rest_framework.pagination import PageNumberPagination
-from .authentication import CustomTokenAuthentication
-from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
 from datetime import datetime
 from contextlib import contextmanager
-from django.utils import timezone
-import uuid
-import shutil
+
+
+from simple_salesforce import Salesforce
+
+from users.models import SalesforceConnection, APIUsage, APIKey, ProcessLog
+
 
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 class APIUsagePagination(PageNumberPagination):
-    page_size = 10  # You can adjust this as needed
+    page_size = 10 
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 30
 
 class UserAPIUsageLogsView(APIView):
     authentication_classes = [CustomTokenAuthentication]
