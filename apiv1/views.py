@@ -170,7 +170,7 @@ class DocumentProcessingView(APIView):
         """
         try:
             # Convert the specific page of the PDF to an image with high DPI (300)
-            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1, dpi=100)
+            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1, dpi=600)
             if not images:
                 message = f"No images generated for page {page_number + 1} from PDF."
                 capture_exception(Exception(message))  # Wrap message in Exception
