@@ -47,34 +47,6 @@ def get_salesforce_organization_id(access_token, instance_url):
     else:
         return None
 
-@csrf_exempt
-@login_required
-def save_salesforce_tokens(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        access_token = data.get('access_token')
-        instance_url = data.get('instance_url')
-        connection_name = request.session.get('connection_name')
-        
-        if not access_token or not instance_url or not connection_name:
-            return JsonResponse({'error': 'Missing required data'}, status=400)
-        
-        organization_id = get_salesforce_organization_id(access_token, instance_url)
-        
-        if not organization_id:
-            return JsonResponse({'error': 'Failed to fetch Salesforce organization ID'}, status=400)
-        
-        SalesforceConnection.objects.create(
-            user=request.user,
-            connection_name=connection_name,
-            access_token=access_token,
-            instance_url=instance_url,
-            authenticated=True,
-            organization_id=organization_id 
-        )
-        
-        return JsonResponse({'success': 'Salesforce connection added successfully'})
-
 @login_required
 def salesforce_login(request):
     connection_name = request.POST.get('connection_name')
