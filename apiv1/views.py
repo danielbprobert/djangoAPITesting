@@ -220,27 +220,36 @@ class DocumentProcessingView(APIView):
                 shutil.rmtree(transaction_dir)
 
     def fetch_file_from_salesforce(self, access_token, document_id, instance_url, transaction_dir):
-        sf = Salesforce(instance_url=instance_url, session_id=access_token)
-        query = f"SELECT VersionData, Title, FileExtension FROM ContentVersion WHERE Id = '{document_id}'"
-        content_version = sf.query(query)
-        if not content_version["records"]:
-            raise ValueError(f"No file found for DocumentId {document_id}")
-        
-        version_data_relative_url = content_version["records"][0]["VersionData"]
-        file_name = content_version["records"][0]["Title"]
-        file_extension = content_version["records"][0]["FileExtension"]
-        
-        version_data_url = f"{instance_url}{version_data_relative_url}"
-        headers = {"Authorization": f"Bearer {access_token}"}
-        response = requests.get(version_data_url, headers=headers, stream=True)
-        if response.status_code != 200:
-            raise ValueError(f"Failed to fetch file content. HTTP Status {response.status_code}")
-        
-        file_path = os.path.join(transaction_dir, f"{file_name}.{file_extension}")
-        with open(file_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                f.write(chunk)
-        return file_path
+        try:
+            sf = Salesforce(instance_url=instance_url, session_id=access_token)
+            query = f"SELECT VersionData, Title, FileExtension FROM ContentVersion WHERE Id = '{document_id}'"
+            content_version = sf.query(query)
+            if not content_version["records"]:
+                raise ValueError(f"No file found for DocumentId {document_id}")
+
+            version_data_relative_url = content_version["records"][0]["VersionData"]
+            file_name = content_version["records"][0]["Title"]
+            file_extension = content_version["records"][0]["FileExtension"]
+
+            version_data_url = f"{instance_url}{version_data_relative_url}"
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(version_data_url, headers=headers, stream=True)
+            if response.status_code != 200:
+                raise ValueError(f"Failed to fetch file content. HTTP Status {response.status_code}")
+
+            file_path = os.path.join(transaction_dir, f"{file_name}.{file_extension}")
+            with open(file_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    f.write(chunk)
+            return file_path
+        except Exception as e:
+            if "INVALID_SESSION_ID" in str(e):
+                # Handle token expiration
+                connection = SalesforceConnection.objects.get(access_token=access_token)
+                connection.refresh_access_token()  # Refresh the token
+                return self.fetch_file_from_salesforce(connection.access_token, document_id, connection.instance_url, transaction_dir)
+            else:
+                raise e
 
     def process_file(self, file_path):
         file_extension = os.path.splitext(file_path)[1].lower()

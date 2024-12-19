@@ -3,8 +3,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.utils.timezone import now
-from django.conf import settings
+from datetime import datetime, timedelta
 import uuid
+import requests
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
@@ -60,7 +61,7 @@ class SalesforceConnection(models.Model):
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="salesforce_connections")
-    connection_name = models.CharField(max_length=255)  
+    connection_name = models.CharField(max_length=255)
     access_token = models.CharField(max_length=255)
     refresh_token = models.CharField(max_length=255, blank=True, null=True)
     instance_url = models.URLField()
@@ -72,6 +73,32 @@ class SalesforceConnection(models.Model):
 
     def __str__(self):
         return f"Salesforce Connection for {self.user.username} - {self.connection_name} ({self.get_org_type_display()})"
+
+    def refresh_access_token(self):
+        """
+        Refresh the Salesforce access token using the stored refresh token.
+        """
+        if not self.refresh_token:
+            raise ValueError("No refresh token available for this Salesforce connection.")
+
+        token_url = f"{self.instance_url}/services/oauth2/token"
+        payload = {
+            "grant_type": "refresh_token",
+            "client_id": settings.SALESFORCE_CLIENT_ID,
+            "client_secret": settings.SALESFORCE_CLIENT_SECRET,
+            "refresh_token": self.refresh_token,
+        }
+
+        response = requests.post(token_url, data=payload)
+        if response.status_code == 200:
+            data = response.json()
+            self.access_token = data["access_token"]
+            self.instance_url = data.get("instance_url", self.instance_url)  # Update instance URL if provided
+            self.authenticated = True
+            self.updated_at = datetime.now()
+            self.save()
+        else:
+            raise ValueError(f"Failed to refresh Salesforce access token: {response.text}")
 
 
 class LoginHistory(models.Model):
