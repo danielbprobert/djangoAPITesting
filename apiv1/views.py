@@ -6,7 +6,7 @@ import pytesseract
 import csv
 
 from django.conf import settings
-from sentry_sdk import capture_exception
+from sentry_sdk import capture_exception, capture_message
 from django.utils import timezone
 from django.core.paginator import Paginator
 
@@ -273,8 +273,10 @@ class DocumentProcessingView(APIView):
                 text += extracted_text
             else:
                 if num_pages > 3:
+                    capture_message('more than 3 pages being run at dpi 100')
                     text += self.ocr_pdf_page(file_path, page_number, 100)
                 else:
+                    capture_message('less than 3 pages being run at dpi 300')
                     text += self.ocr_pdf_page(file_path, page_number, 300)
         num_characters = len(text)
         return text, num_pages, num_characters
