@@ -297,7 +297,7 @@ class DocumentProcessingView(APIView):
             salesforce_connection.save()
             return True
         else:
-            sentry_sdk.capture_message(
+            capture_message(
                 f"Failed to refresh access token for connection {salesforce_connection.id}. "
                 f"Status: {response.status_code}, Error: {response.text}",
                 level="error"
