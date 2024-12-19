@@ -75,7 +75,8 @@ def salesforce_login(request):
 
     salesforce_auth_url = (
         f"{instance_url}/services/oauth2/authorize?"
-        f"response_type=token&client_id={settings.SALESFORCE_CLIENT_ID}&redirect_uri={settings.SALESFORCE_CALLBACK_URL}"
+        f"response_type=code&client_id={settings.SALESFORCE_CLIENT_ID}&redirect_uri={settings.SALESFORCE_CALLBACK_URL}"
+        f"&scope=refresh_token+full+openid"
     )
 
     return redirect(salesforce_auth_url)
@@ -96,14 +97,13 @@ def save_salesforce_tokens(request):
         body = json.loads(request.body)
         access_token = body.get('access_token')
         instance_url = body.get('instance_url')
+        refresh_token = body.get('refresh_token')
         
-        # Get the connection ID from the session
         connection_id = request.session.get('salesforce_connection_id')
         if not connection_id:
             capture_message("Salesforce connection ID is missing in session", level="error")
             return JsonResponse({'error': 'Salesforce connection ID missing in session'}, status=400)
 
-        # Get the SalesforceConnection object
         try:
             salesforce_connection = SalesforceConnection.objects.get(id=connection_id, user=request.user)
         except SalesforceConnection.DoesNotExist:
@@ -112,11 +112,12 @@ def save_salesforce_tokens(request):
         
         organization_id = get_salesforce_organization_id(access_token, instance_url)
 
-        # Update the connection with the access token and instance URL
+        
         salesforce_connection.access_token = access_token
         salesforce_connection.instance_url = instance_url
-        salesforce_connection.authenticated = True  # Mark the connection as authenticated
+        salesforce_connection.authenticated = True  
         salesforce_connection.organization_id = organization_id
+        salesforce_connection.refresh_token = refresh_token
         salesforce_connection.save()
 
         return JsonResponse({'message': 'Salesforce connection saved successfully'})
