@@ -36,49 +36,42 @@
 {% block javascripts %}
 <script>
     window.onload = function () {
-        // Get the hash parameters from the URL (the part after the #)
-        const hashParams = new URLSearchParams(window.location.hash.slice(1));
-        const accessToken = hashParams.get('access_token');
-        const instanceUrl = hashParams.get('instance_url');
-        const refreshToken = hashParams.get('refresh_token');
-
-        // Check if both access_token and instance_url are available
-        if (accessToken && instanceUrl) {
-            // Send the access token and instance URL to the server
-            fetch('/salesforce/save-tokens/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'  // Ensure CSRF token is included
-                },
-                body: JSON.stringify({ access_token: accessToken, instance_url: instanceUrl, refresh_token: refreshToken })
-            })
-            .then(response => {
-                // Debugging step: Log the response
-                console.log("Response status:", response.status);
-                console.log("Response headers:", response.headers);
-
-                // Check if the response status is OK (2xx)
-                if (response.ok) {
-                    return response.json(); // Parse JSON if response is OK
-                } else {
-                    return response.json().then(data => {
-                        throw new Error(data.error || 'Unexpected error');
-                    });
-                }
-            })
-            .then(data => {
-                console.log("Server response data:", data);
-                // Redirect after successful save
-                window.location = '/connections/';
-            })
-            .catch(error => {
-                // Log detailed error information
-                console.error("Fetch error details:", error);
-                alert('An error occurred while saving the Salesforce connection: ' + error.message);
-            });
-        } else {
-            alert('Missing Salesforce tokens.');
+        try {
+            const hashParams = new URLSearchParams(window.location.hash.slice(1));
+            const accessToken = hashParams.get('access_token');
+            const instanceUrl = hashParams.get('instance_url');
+            const refreshToken = hashParams.get('refresh_token');
+    
+            if (accessToken && instanceUrl) {
+                fetch('/salesforce/save-tokens/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        access_token: accessToken,
+                        instance_url: instanceUrl,
+                        refresh_token: refreshToken
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    window.location = '/connections/';
+                })
+                .catch(error => {
+                    console.error("Error saving Salesforce tokens:", error);
+                    alert('Failed to save Salesforce connection: ' + error.message);
+                });
+            } else {
+                alert('Missing Salesforce tokens in the URL.');
+            }
+        } catch (error) {
+            console.error("An unexpected error occurred:", error);
+            alert('An unexpected error occurred while processing Salesforce tokens.');
         }
     };
 </script>
