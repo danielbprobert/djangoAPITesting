@@ -141,3 +141,4 @@ GitHub.sublime-settings
 /venv
 
 .env
+.cache_ggshield
