@@ -80,8 +80,19 @@ def salesforce_login(request):
     # Generate PKCE pair
     code_verifier, code_challenge = generate_pkce_pair()
 
+     # Save the connection in the session
+    salesforce_connection = SalesforceConnection.objects.create(
+        user=request.user,
+        connection_name=connection_name,
+        org_type=org_type,
+        instance_url=instance_url,
+        authenticated=False
+    )
+
     # Save the code_verifier in the session for later use
     request.session['pkce_code_verifier'] = code_verifier
+    request.session['salesforce_connection_id'] = salesforce_connection.id
+    request.session['salesforce_instance_url'] = instance_url
 
     salesforce_auth_url = (
         f"{instance_url}/services/oauth2/authorize?"
@@ -109,8 +120,13 @@ def save_salesforce_tokens(request):
         if not code:
             return JsonResponse({'error': 'Authorization code is required'}, status=400)
 
+        # Get the instance URL from the session
+        instance_url = request.session.get('salesforce_instance_url')
+        if not instance_url:
+            return JsonResponse({'error': 'Salesforce instance URL missing in session'}, status=400)
+
         # Exchange the authorization code for tokens
-        token_url = f"{settings.SALESFORCE_INSTANCE_URL}/services/oauth2/token"
+        token_url = f"{instance_url}/services/oauth2/token"
         payload = {
             "grant_type": "authorization_code",
             "client_id": settings.SALESFORCE_CLIENT_ID,
@@ -126,7 +142,7 @@ def save_salesforce_tokens(request):
         token_data = response.json()
         access_token = token_data.get('access_token')
         refresh_token = token_data.get('refresh_token')
-        instance_url = token_data.get('instance_url')
+        instance_url = token_data.get('instance_url')  # Salesforce might return the instance URL again
 
         # Retrieve and update the Salesforce connection
         connection_id = request.session.get('salesforce_connection_id')
