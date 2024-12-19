@@ -1,0 +1,51 @@
+{% extends "documentation/base.html" %}
+
+{% block title %}{{ section.title }} - API Documentation{% endblock title %}
+
+{% block documentation_content %}
+<h2>{{ section.title }}</h2>
+<div>
+  {{ section.content|safe }}
+</div>
+
+{% if response_codes %}
+<h3>Response Codes</h3>
+<ul class="nav nav-tabs" id="responseCodeTabs" role="tablist">
+  {% for response_code in response_codes %}
+  <li class="nav-item" role="presentation">
+    <a
+      class="nav-link {% if forloop.first %}active{% endif %}"
+      id="tab-{{ response_code.code }}"
+      data-toggle="tab"
+      href="#tab-content-{{ response_code.code }}"
+      role="tab"
+      aria-controls="tab-content-{{ response_code.code }}"
+      aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+    >
+      {{ response_code.code }}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+<div class="tab-content" id="responseCodeTabContent">
+  {% for response_code in response_codes %}
+  <div
+    class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+    id="tab-content-{{ response_code.code }}"
+    role="tabpanel"
+    aria-labelledby="tab-{{ response_code.code }}"
+  >
+    {% for example in response_code.examples.all %}
+    <pre>
+      <code class="language-json">{{ example.example_text }}</code>
+    </pre>
+    {% empty %}
+    <pre>
+      <code>No examples provided.</code>
+    </pre>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock documentation_content %}

@@ -1,8 +1,9 @@
 import os
-from decouple import config
 import sentry_sdk
 from pathlib import Path
 from sentry_sdk.integrations.django import DjangoIntegration
+from decouple import config
+from pathlib import Path
 sentry_sdk.init(
     dsn=config('SENTRY_SDK_KEY', default='your-default-secret-key'),
     integrations=[DjangoIntegration()],
@@ -10,9 +11,9 @@ sentry_sdk.init(
     send_default_pii=config('SEND_DEFAULT_PII', default=False),
 )
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000)   
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False) 
-SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False) 
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False) 
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False, cast=bool) 
+SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool) 
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool) 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='your-default-secret-key')
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -32,10 +33,12 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'subscriptions',
     'apiv1',
+    'tinymce',
+    'documentation',
 ]
 SITE_ID = 1
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False)
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False)
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -100,7 +103,7 @@ LOGIN_REDIRECT_URL = '/'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='your-default-secret-key')
 EMAIL_PORT = config('EMAIL_PORT', default='your-default-secret-key')
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default='your-default-secret-key')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your-default-secret-key')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your-default-secret-key')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your-default-secret-key')

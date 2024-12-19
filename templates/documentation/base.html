@@ -1,0 +1,43 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Documentation {% endblock title %}
+
+{% block content %}
+<div class="header pb-6 d-flex align-items-center" style="min-height: 100px">
+  <!-- Mask -->
+  <span class="mask bg-gradient-default opacity-8"></span>
+  <!-- Header container -->
+  <div class="container-fluid d-flex align-items-center">
+    <h1 class="text-white">API Documentation</h1>
+  </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-3">
+      <!-- Sidebar -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Sections</h3>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for sec in sections %}
+          <a href="{% url 'documentation_section' sec.slug %}" class="list-group-item list-group-item-action">
+            {{ sec.title }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-9">
+      <!-- Main Content -->
+      <div class="card" style="min-height: 70vh;">
+        <div class="card-body">
+          {% block documentation_content %}{% endblock documentation_content %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

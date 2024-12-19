@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from django.conf.urls import handler403, handler404, handler500
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -14,4 +16,6 @@ urlpatterns = [
     path('', include('users.urls')),
     path("subscriptions/", include("subscriptions.urls")),
     path('api/v1/', include('apiv1.urls')),
+    path('documentation/', include('documentation.urls')),
+    path('tinymce/', include('tinymce.urls')),
 ]

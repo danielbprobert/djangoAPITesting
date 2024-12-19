@@ -17,9 +17,15 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if 'connections' in segment %} active {% endif %}" href="{% url 'connections' %}">
-              <i class="ni ni-planet text-primary"></i>
-              <span class="nav-link-text">Connections</span>
+            <a class="nav-link {% if 'documentation' in segment %} active {% endif %}" href="{% url 'documentation_index' %}">
+              <i class="ni ni-hat-3 text-primary"></i>
+              <span class="nav-link-text">Documentation</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'subscriptions' in segment %} active {% endif %}" href="{% url 'subscriptions:subscription_options_list' %}">
+              <i class="ni ni-bag-17 text-primary"></i>
+              <span class="nav-link-text">Subscription</span>
             </a>
           </li>
           <li class="nav-item">
@@ -28,18 +34,10 @@
               <span class="nav-link-text">API Key</span>
             </a>
           </li>
-          <!-- Subscriptions Link -->
           <li class="nav-item">
-            <a class="nav-link {% if 'subscriptions' in segment %} active {% endif %}" href="{% url 'subscriptions:subscription_options_list' %}">
-              <i class="ni ni-bag-17 text-primary"></i>
-              <span class="nav-link-text">Subscription</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link {% if 'documentation' in segment %} active {% endif %}" href="#navbar-documentation">
-              <i class="ni ni-hat-3 text-primary"></i>
-              <span class="nav-link-text">Documentation</span>
+            <a class="nav-link {% if 'connections' in segment %} active {% endif %}" href="{% url 'connections' %}">
+              <i class="ni ni-planet text-primary"></i>
+              <span class="nav-link-text">Connections</span>
             </a>
           </li>
           <li class="nav-item">
