@@ -27,10 +27,10 @@ from .models import CustomUser, SalesforceConnection, APIKey, LoginHistory, APIU
 
 
 def generate_pkce_pair():
-    # Generate a random string for the code verifier
+    # Generate a random code verifier (43-128 characters)
     code_verifier = base64.urlsafe_b64encode(os.urandom(32)).rstrip(b'=').decode('utf-8')
 
-    # Create the code challenge by hashing the verifier and encoding it
+    # Create the code challenge using SHA256
     code_challenge = base64.urlsafe_b64encode(
         hashlib.sha256(code_verifier.encode('utf-8')).digest()
     ).rstrip(b'=').decode('utf-8')
@@ -119,6 +119,10 @@ def save_salesforce_tokens(request):
 
         if not code:
             return JsonResponse({'error': 'Authorization code is required'}, status=400)
+        
+        code_verifier = request.session.get('pkce_code_verifier')
+        if not code_verifier:
+            return JsonResponse({'error': 'PKCE code verifier is missing'}, status=400)
 
         # Get the instance URL from the session
         instance_url = request.session.get('salesforce_instance_url')
@@ -133,6 +137,7 @@ def save_salesforce_tokens(request):
             "client_secret": settings.SALESFORCE_CLIENT_SECRET,
             "redirect_uri": settings.SALESFORCE_CALLBACK_URL,
             "code": code,
+            "code_verifier": code_verifier,
         }
 
         capture_message(f"save_salesforce_tokens: Token exchange payload: {payload}", level="info")
