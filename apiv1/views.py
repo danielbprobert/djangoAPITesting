@@ -221,12 +221,13 @@ class DocumentProcessingView(APIView):
 
     def fetch_file_from_salesforce(self, access_token, document_id, instance_url, transaction_dir):
         try:
-            # Initialize Salesforce connection
+            # Create Salesforce instance
             sf = Salesforce(instance_url=instance_url, session_id=access_token)
 
-            # Query the ContentVersion object for file metadata
+            # Query for file metadata
             query = f"SELECT VersionData, Title, FileExtension FROM ContentVersion WHERE Id = '{document_id}'"
             content_version = sf.query(query)
+
             if not content_version["records"]:
                 raise ValueError(f"No file found for DocumentId {document_id}")
 
@@ -235,10 +236,11 @@ class DocumentProcessingView(APIView):
             file_name = content_version["records"][0]["Title"]
             file_extension = content_version["records"][0]["FileExtension"]
 
-            # Fetch the actual file content
+            # Fetch the file content
             version_data_url = f"{instance_url}{version_data_relative_url}"
             headers = {"Authorization": f"Bearer {access_token}"}
             response = requests.get(version_data_url, headers=headers, stream=True)
+
             if response.status_code != 200:
                 raise ValueError(f"Failed to fetch file content. HTTP Status {response.status_code}")
 
@@ -247,30 +249,36 @@ class DocumentProcessingView(APIView):
             with open(file_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=1024):
                     f.write(chunk)
+
             return file_path
 
         except Exception as e:
             if "INVALID_SESSION_ID" in str(e):
-                # Handle expired access token
-                salesforce_connection = SalesforceConnection.objects.get(access_token=access_token)
-                refresh_successful = self.refresh_access_token(salesforce_connection)
-
-                if refresh_successful:
-                    # Retry with the new access token
-                    new_access_token = salesforce_connection.access_token
-                    return self.fetch_file_from_salesforce(
-                        new_access_token, document_id, salesforce_connection.instance_url, transaction_dir
-                    )
-                else:
-                    capture_message(
-                        f"Failed to refresh access token for Salesforce connection {salesforce_connection.id}. "
-                        f"Error: {str(e)}",
-                        level="error"
-                    )
-                    raise ValueError("Failed to refresh Salesforce access token and retry file fetch.") from e
+                # Handle expired token
+                return self._handle_token_expiration(access_token, document_id, instance_url, transaction_dir)
             else:
                 # Reraise unexpected exceptions
                 raise e
+
+    def _handle_token_expiration(self, expired_access_token, document_id, instance_url, transaction_dir):
+        try:
+            # Fetch the Salesforce connection associated with the expired token
+            connection = SalesforceConnection.objects.get(access_token=expired_access_token)
+
+            # Refresh the token
+            token_refreshed = self.refresh_access_token(connection)
+
+            if token_refreshed:
+                # Retry the file fetch with the new access token
+                return self.fetch_file_from_salesforce(
+                    connection.access_token, document_id, connection.instance_url, transaction_dir
+                )
+            else:
+                raise ValueError("Failed to refresh Salesforce access token.")
+        except SalesforceConnection.DoesNotExist:
+            raise ValueError("No Salesforce connection found for the given access token.")
+        except Exception as e:
+            raise e
 
     def refresh_access_token(self, salesforce_connection):
         token_url = f"{salesforce_connection.instance_url}/services/oauth2/token"
@@ -285,16 +293,12 @@ class DocumentProcessingView(APIView):
 
         if response.status_code == 200:
             token_data = response.json()
-            salesforce_connection.access_token = token_data.get('access_token')
+            salesforce_connection.access_token = token_data.get("access_token")
             salesforce_connection.save()
-            capture_message(
-                f"Successfully refreshed access token for Salesforce connection {salesforce_connection.id}",
-                level="info"
-            )
             return True
         else:
-            capture_message(
-                f"Failed to refresh access token for Salesforce connection {salesforce_connection.id}. "
+            sentry_sdk.capture_message(
+                f"Failed to refresh access token for connection {salesforce_connection.id}. "
                 f"Status: {response.status_code}, Error: {response.text}",
                 level="error"
             )
