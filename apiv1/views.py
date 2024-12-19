@@ -278,7 +278,7 @@ class DocumentProcessingView(APIView):
 
     def ocr_pdf_page(self, file_path, page_number):
         try:
-            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1, dpi=100)
+            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1, dpi=300)
             if not images:
                 message = f"No images generated for page {page_number + 1} from PDF."
                 capture_exception(Exception(message))
