@@ -1,16 +1,11 @@
 {% extends 'layouts/base.html' %}
 
-{% block title %} Profile {% endblock title %}
+{% block title %} Connecting to Salesforce {% endblock title %}
 
 {% block content %}
-<div class="header pb-6 d-flex align-items-center" 
-     style="min-height: 100px">
-  <!-- Mask -->
-  <span class="mask bg-gradient-default opacity-8"></span>
-  <!-- Header container -->
-  <div class="container-fluid d-flex align-items-center">
-    
-  </div>
+<div class="header pb-6 d-flex align-items-center" style="min-height: 100px">
+    <span class="mask bg-gradient-default opacity-8"></span>
+    <div class="container-fluid d-flex align-items-center"></div>
 </div>
 <div class="container-fluid mt--6">
     <div class="row">
@@ -25,41 +20,39 @@
                 </div>
                 <div class="card-body">
                     <div class="mt-4">
+                        <p>Processing your connection to Salesforce...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 {% endblock content %}
+
 {% block javascripts %}
 <script>
     window.onload = function () {
         try {
-            const hashParams = new URLSearchParams(window.location.hash.slice(1));
-            const accessToken = hashParams.get('access_token');
-            const instanceUrl = hashParams.get('instance_url');
-            const refreshToken = hashParams.get('refresh_token');
-    
-            if (accessToken && instanceUrl) {
+            // Extract the code parameter from the query string
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+
+            if (code) {
+                // Send the code to the server to exchange it for tokens
                 fetch('/salesforce/save-tokens/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
-                    body: JSON.stringify({
-                        access_token: accessToken,
-                        instance_url: instanceUrl,
-                        refresh_token: refreshToken
-                    })
+                    body: JSON.stringify({ code: code })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
                         throw new Error(data.error);
                     }
+                    // Redirect to connections page on success
                     window.location = '/connections/';
                 })
                 .catch(error => {
@@ -67,7 +60,7 @@
                     alert('Failed to save Salesforce connection: ' + error.message);
                 });
             } else {
-                alert('Missing Salesforce tokens in the URL.');
+                alert('Authorization code not found in the URL. Please try again.');
             }
         } catch (error) {
             console.error("An unexpected error occurred:", error);
@@ -75,5 +68,4 @@
         }
     };
 </script>
-
 {% endblock javascripts %}

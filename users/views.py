@@ -100,41 +100,52 @@ def salesforce_callback(request):
 @csrf_exempt
 def save_salesforce_tokens(request):
     if request.method != 'POST':
-        capture_message("Invalid request method for save_salesforce_tokens", level="warning")
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
     try:
-        # Parse the JSON body
-        body = json.loads(request.body)
-        access_token = body.get('access_token')
-        instance_url = body.get('instance_url')
-        refresh_token = body.get('refresh_token')
-        
+        data = json.loads(request.body)
+        code = data.get('code')
+
+        if not code:
+            return JsonResponse({'error': 'Authorization code is required'}, status=400)
+
+        # Exchange the authorization code for tokens
+        token_url = f"{settings.SALESFORCE_INSTANCE_URL}/services/oauth2/token"
+        payload = {
+            "grant_type": "authorization_code",
+            "client_id": settings.SALESFORCE_CLIENT_ID,
+            "client_secret": settings.SALESFORCE_CLIENT_SECRET,
+            "redirect_uri": settings.SALESFORCE_CALLBACK_URL,
+            "code": code,
+        }
+
+        response = requests.post(token_url, data=payload)
+        if response.status_code != 200:
+            return JsonResponse({'error': 'Failed to exchange authorization code for tokens'}, status=response.status_code)
+
+        token_data = response.json()
+        access_token = token_data.get('access_token')
+        refresh_token = token_data.get('refresh_token')
+        instance_url = token_data.get('instance_url')
+
+        # Retrieve and update the Salesforce connection
         connection_id = request.session.get('salesforce_connection_id')
         if not connection_id:
-            capture_message("Salesforce connection ID is missing in session", level="error")
             return JsonResponse({'error': 'Salesforce connection ID missing in session'}, status=400)
 
         try:
             salesforce_connection = SalesforceConnection.objects.get(id=connection_id, user=request.user)
         except SalesforceConnection.DoesNotExist:
-            capture_exception(Exception(f"SalesforceConnection with ID {connection_id} not found for user {request.user}"))
             return JsonResponse({'error': 'Salesforce connection not found'}, status=404)
-        
-        organization_id = get_salesforce_organization_id(access_token, instance_url)
 
-        
         salesforce_connection.access_token = access_token
+        salesforce_connection.refresh_token = refresh_token  # Save the refresh token
         salesforce_connection.instance_url = instance_url
-        salesforce_connection.authenticated = True  
-        salesforce_connection.organization_id = organization_id
-        salesforce_connection.refresh_token = refresh_token
+        salesforce_connection.authenticated = True
         salesforce_connection.save()
 
         return JsonResponse({'message': 'Salesforce connection saved successfully'})
     except Exception as e:
-        # Capture the exception and report it to Sentry
-        capture_exception(e)
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
