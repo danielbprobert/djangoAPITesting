@@ -272,11 +272,9 @@ class DocumentProcessingView(APIView):
             if extracted_text and extracted_text.strip():
                 text += extracted_text
             else:
-                if num_pages > 3:
-                    capture_message('more than 3 pages being run at dpi 100')
+                if num_pages > 5:
                     text += self.ocr_pdf_page(file_path, page_number, 100)
                 else:
-                    capture_message('less than 3 pages being run at dpi 300')
                     text += self.ocr_pdf_page(file_path, page_number, 300)
         num_characters = len(text)
         return text, num_pages, num_characters
