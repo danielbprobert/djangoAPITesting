@@ -4,6 +4,8 @@ import secrets
 import json
 import requests
 import csv
+import hashlib
+import os
 from sentry_sdk import capture_message, capture_exception
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
@@ -22,6 +24,18 @@ from datetime import datetime, timedelta
 from decouple import config
 from calendar import monthrange
 from .models import CustomUser, SalesforceConnection, APIKey, LoginHistory, APIUsage, TrustedIP
+
+
+def generate_pkce_pair():
+    # Generate a random string for the code verifier
+    code_verifier = base64.urlsafe_b64encode(os.urandom(32)).rstrip(b'=').decode('utf-8')
+
+    # Create the code challenge by hashing the verifier and encoding it
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    ).rstrip(b'=').decode('utf-8')
+
+    return code_verifier, code_challenge
 
 
 @login_required
@@ -51,8 +65,8 @@ def get_salesforce_organization_id(access_token, instance_url):
 def salesforce_login(request):
     connection_name = request.POST.get('connection_name')
     org_type = request.POST.get('org_type')
-    instance_url = request.POST.get('instance_url') 
-    custom_instance_url = request.POST.get('custom_instance_url') 
+    instance_url = request.POST.get('instance_url')
+    custom_instance_url = request.POST.get('custom_instance_url')
 
     if instance_url == 'https://custom.my.salesforce.com' and custom_instance_url:
         instance_url = custom_instance_url
@@ -63,20 +77,17 @@ def salesforce_login(request):
     if not instance_url:
         return JsonResponse({'error': 'Instance URL is required'}, status=400)
 
-    salesforce_connection = SalesforceConnection.objects.create(
-        user=request.user,
-        connection_name=connection_name,
-        org_type=org_type,
-        instance_url=instance_url,
-        authenticated=False 
-    )
+    # Generate PKCE pair
+    code_verifier, code_challenge = generate_pkce_pair()
 
-    request.session['salesforce_connection_id'] = salesforce_connection.id
+    # Save the code_verifier in the session for later use
+    request.session['pkce_code_verifier'] = code_verifier
 
     salesforce_auth_url = (
         f"{instance_url}/services/oauth2/authorize?"
         f"response_type=code&client_id={settings.SALESFORCE_CLIENT_ID}&redirect_uri={settings.SALESFORCE_CALLBACK_URL}"
         f"&scope=refresh_token+full+openid"
+        f"&code_challenge={code_challenge}&code_challenge_method=S256"
     )
 
     return redirect(salesforce_auth_url)
