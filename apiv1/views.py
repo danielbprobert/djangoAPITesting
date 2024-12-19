@@ -260,7 +260,7 @@ class DocumentProcessingView(APIView):
                 raise e
             
 
-    def refresh_access_token(salesforce_connection):
+    def refresh_access_token(self, salesforce_connection):
         token_url = f"{salesforce_connection.instance_url}/services/oauth2/token"
         payload = {
             "grant_type": "refresh_token",
