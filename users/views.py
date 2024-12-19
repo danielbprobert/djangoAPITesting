@@ -135,10 +135,15 @@ def save_salesforce_tokens(request):
             "code": code,
         }
 
-        
+        capture_message(f"save_salesforce_tokens: Token exchange payload: {payload}", level="info")
 
         response = requests.post(token_url, data=payload)
+        capture_message(f"save_salesforce_tokens: Token exchange response: {response.text}", level="info")
         if response.status_code != 200:
+            capture_message(
+                f"save_salesforce_tokens: Failed to exchange code. Status: {response.status_code}, Response: {response.text}",
+                level="error"
+            )
             return JsonResponse({
                 'error': f"Failed to exchange authorization code for tokens",
                 'details': response.json()
