@@ -272,13 +272,16 @@ class DocumentProcessingView(APIView):
             if extracted_text and extracted_text.strip():
                 text += extracted_text
             else:
-                text += self.ocr_pdf_page(file_path, page_number)
+                if num_pages > 3:
+                    text += self.ocr_pdf_page(file_path, page_number, 100)
+                else:
+                    text += self.ocr_pdf_page(file_path, page_number, 300)
         num_characters = len(text)
         return text, num_pages, num_characters
 
-    def ocr_pdf_page(self, file_path, page_number):
+    def ocr_pdf_page(self, file_path, page_number, dpi):
         try:
-            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1, dpi=300)
+            images = convert_from_path(file_path, first_page=page_number + 1, last_page=page_number + 1, dpi=dpi)
             if not images:
                 message = f"No images generated for page {page_number + 1} from PDF."
                 capture_exception(Exception(message))
