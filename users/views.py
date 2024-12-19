@@ -140,15 +140,9 @@ def save_salesforce_tokens(request):
             "code_verifier": code_verifier,
         }
 
-        capture_message(f"save_salesforce_tokens: Token exchange payload: {payload}", level="info")
-
+        
         response = requests.post(token_url, data=payload)
-        capture_message(f"save_salesforce_tokens: Token exchange response: {response.text}", level="info")
         if response.status_code != 200:
-            capture_message(
-                f"save_salesforce_tokens: Failed to exchange code. Status: {response.status_code}, Response: {response.text}",
-                level="error"
-            )
             return JsonResponse({
                 'error': f"Failed to exchange authorization code for tokens",
                 'details': response.json()
@@ -159,7 +153,11 @@ def save_salesforce_tokens(request):
         refresh_token = token_data.get('refresh_token')
         instance_url = token_data.get('instance_url')  # Salesforce might return the instance URL again
 
-        # Retrieve and update the Salesforce connection
+        organization_id = get_salesforce_organization_id(access_token, instance_url)
+
+        if not organization_id:
+            return JsonResponse({'error': 'Failed to retrieve organization ID'}, status=500)
+
         connection_id = request.session.get('salesforce_connection_id')
         if not connection_id:
             return JsonResponse({'error': 'Salesforce connection ID missing in session'}, status=400)
@@ -172,6 +170,7 @@ def save_salesforce_tokens(request):
         salesforce_connection.access_token = access_token
         salesforce_connection.refresh_token = refresh_token  # Save the refresh token
         salesforce_connection.instance_url = instance_url
+        salesforce_connection.organization_id = organization_id
         salesforce_connection.authenticated = True
         salesforce_connection.save()
 
