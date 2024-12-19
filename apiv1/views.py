@@ -292,9 +292,8 @@ class DocumentProcessingView(APIView):
 
                     image_path = os.path.join(settings.MEDIA_ROOT, f"ocr_image_page_{page_number + 1}_image_{image_index + 1}.png")
                     image.save(image_path)
-                    # ocr_text += pytesseract.image_to_string(image, config='--psm 6')
                     ocr_data = pytesseract.image_to_data(image, config='--psm 6', output_type=pytesseract.Output.DICT)
-                    ocr_text = ' '.join([ocr_data['text'][i] for i in range(len(ocr_data['text'])) if int(ocr_data['conf'][i]) > 0])
+                    ocr_text += ' '.join([ocr_data['text'][i] for i in range(len(ocr_data['text'])) if int(ocr_data['conf'][i]) > 0])
                 except Exception as inner_e:
                     message = f"Image handling failed on page {page_number + 1}, image {image_index + 1}: {str(inner_e)}"
                     capture_exception(Exception(message))
