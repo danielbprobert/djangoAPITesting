@@ -75,7 +75,7 @@ def salesforce_login(request):
 
     salesforce_auth_url = (
         f"{instance_url}/services/oauth2/authorize?"
-        f"response_type=code&client_id={settings.SALESFORCE_CLIENT_ID}&redirect_uri={settings.SALESFORCE_CALLBACK_URL}"
+        f"response_type=token&client_id={settings.SALESFORCE_CLIENT_ID}&redirect_uri={settings.SALESFORCE_CALLBACK_URL}"
         f"&scope=refresh_token+full+openid"
     )
 
