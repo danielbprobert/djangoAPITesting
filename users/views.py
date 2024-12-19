@@ -83,18 +83,17 @@ def salesforce_login(request):
     # Save the code_verifier in the session for later use
     request.session['pkce_code_verifier'] = code_verifier
 
-    # Construct the Salesforce OAuth URL
     salesforce_auth_url = (
         f"{instance_url}/services/oauth2/authorize?"
-        f"response_type=token&client_id={settings.SALESFORCE_CLIENT_ID}&redirect_uri={settings.SALESFORCE_CALLBACK_URL}"
+        f"response_type=code&client_id={settings.SALESFORCE_CLIENT_ID}&redirect_uri={settings.SALESFORCE_CALLBACK_URL}"
         f"&scope=refresh_token+full"
+        f"&code_challenge={code_challenge}&code_challenge_method=S256"
     )
 
     return redirect(salesforce_auth_url)
 
 @login_required
 def salesforce_callback(request):
-    
     return render(request, 'connections/salesforce_callback.html')
 
 @login_required
