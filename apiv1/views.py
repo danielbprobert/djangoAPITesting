@@ -273,7 +273,7 @@ class DocumentProcessingView(APIView):
                 text += extracted_text
             else:
                 if num_pages > 5:
-                    text += self.ocr_pdf_page(file_path, page_number, 100)
+                    text += self.ocr_pdf_page(file_path, page_number, 150)
                 else:
                     text += self.ocr_pdf_page(file_path, page_number, 300)
         num_characters = len(text)
