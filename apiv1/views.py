@@ -246,10 +246,42 @@ class DocumentProcessingView(APIView):
             if "INVALID_SESSION_ID" in str(e):
                 # Handle token expiration
                 connection = SalesforceConnection.objects.get(access_token=access_token)
-                connection.refresh_access_token()  # Refresh the token
+                refreshToken = self.refresh_access_token(connection)
+                if refreshToken == True:
+                    connection = SalesforceConnection.objects.get(access_token=access_token)
+                else:
+                    capture_message(
+                        f"Failed to refresh access token: Status {response.status_code}, Error {response.text}",
+                        level="error"
+                    )
+                
                 return self.fetch_file_from_salesforce(connection.access_token, document_id, connection.instance_url, transaction_dir)
             else:
                 raise e
+            
+
+    def refresh_access_token(salesforce_connection):
+        token_url = f"{salesforce_connection.instance_url}/services/oauth2/token"
+        payload = {
+            "grant_type": "refresh_token",
+            "client_id": settings.SALESFORCE_CLIENT_ID,
+            "client_secret": settings.SALESFORCE_CLIENT_SECRET,
+            "refresh_token": salesforce_connection.refresh_token,
+        }
+
+        response = requests.post(token_url, data=payload)
+
+        if response.status_code == 200:
+            token_data = response.json()
+            salesforce_connection.access_token = token_data.get('access_token')
+            salesforce_connection.save()
+            return True
+        else:
+            capture_message(
+                f"Failed to refresh access token: Status {response.status_code}, Error {response.text}",
+                level="error"
+            )
+            return False
 
     def process_file(self, file_path):
         file_extension = os.path.splitext(file_path)[1].lower()
